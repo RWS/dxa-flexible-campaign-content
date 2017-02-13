@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.sdl.dxa.modules.campaigncontent</groupId>
+    <artifactId>campaigncontent-dxa-module</artifactId>
+    <version>1.0.0</version>
+
+    <properties>
+      <java-version>1.8</java-version>
+      <dxa.version>1.7.0</dxa.version>
+      <dxa-release-branch>release/1.7</dxa-release-branch>
+    </properties>
+
+    <dependencyManagement>
+     <dependencies>
+         <dependency>
+             <groupId>com.sdl.dxa</groupId>
+             <artifactId>dxa-bom</artifactId>
+             <version>${dxa.version}</version>
+             <scope>import</scope>
+             <type>pom</type>
+         </dependency>
+
+         <dependency>
+             <groupId>com.sdl.dxa.modules</groupId>
+             <artifactId>dxa-bom-modules</artifactId>
+             <version>${dxa.version}</version>
+             <scope>import</scope>
+             <type>pom</type>
+         </dependency>
+
+     </dependencies>
+ </dependencyManagement>
+
+    <dependencies>
+
+        <!-- SDL Digital Experience Accelerator -->
+        <dependency>
+            <groupId>com.sdl.dxa</groupId>
+            <artifactId>dxa-common-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sdl.dxa</groupId>
+            <artifactId>dxa-common-impl</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sdl.dxa</groupId>
+            <artifactId>dxa-tridion-provider</artifactId>
+        </dependency>
+
+        <!-- DXA Core module -->
+        <dependency>
+            <groupId>com.sdl.dxa.modules</groupId>
+            <artifactId>dxa-module-core</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Google Guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+
+        <!-- JSoup -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+
+        <!-- Servlet API -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+        </dependency>
+
+        <!-- JUnit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+       <plugins>
+           <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-compiler-plugin</artifactId>
+               <version>3.1</version>
+               <configuration>
+                   <source>${java-version}</source>
+                   <target>${java-version}</target>
+               </configuration>
+           </plugin>
+       </plugins>
+   </build>
+
+</project>

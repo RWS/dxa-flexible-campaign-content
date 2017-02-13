@@ -1,0 +1,2 @@
+Tridion.ContentManager.\*
+Tridion.ContentManager.Data.\*
