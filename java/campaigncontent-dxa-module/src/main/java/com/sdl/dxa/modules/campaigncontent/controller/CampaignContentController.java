@@ -59,25 +59,38 @@ public class CampaignContentController extends BaseController {
     @Autowired
     private PluggableMarkupRegistry pluggableMarkupRegistry;
 
-    private Map<String, FreeFormatMarkup> cachedMarkup = new HashMap<>();
+    private Map<String, CampaignContentMarkup> cachedMarkup = new HashMap<>();
 
-    static class FreeFormatMarkup {
+    /**
+     * Holder class for campaign content
+     */
+    static public class CampaignContentMarkup {
 
         HtmlHolder htmlMarkup;
         long lastModified;
 
-        FreeFormatMarkup(HtmlHolder htmlMarkup, long lastModified) {
+        CampaignContentMarkup(HtmlHolder htmlMarkup, long lastModified) {
             this.htmlMarkup = htmlMarkup;
             this.lastModified  = lastModified;
         }
     }
 
-    static class HtmlHolder {
+    /**
+     * Holder class for the different HTML fragments in a campaign
+     */
+    static public class HtmlHolder {
         String headerHtml;
         String mainHtml;
         String footerHtml;
     }
 
+    /**
+     * Assembly content
+     * @param request
+     * @param entityId
+     * @return
+     * @throws ContentProviderException
+     */
     @RequestMapping(method = RequestMethod.GET, value = "AssemblyContent/{entityId}")
     public String assemblyContent(HttpServletRequest request, @PathVariable String entityId) throws ContentProviderException {
 
@@ -102,34 +115,50 @@ public class CampaignContentController extends BaseController {
         return entity;
     }
 
-    private void getProcessedMarkup(CampaignContentZIP freeFormatContent) throws ContentProviderException {
+    /**
+     * Get processed markup
+     * @param campaignContentZip
+     * @throws ContentProviderException
+     */
+    protected void getProcessedMarkup(CampaignContentZIP campaignContentZip) throws ContentProviderException {
 
         Localization localization = this.webRequestContext.getLocalization();
-        StaticContentItem zipItem = this.getZipItem(freeFormatContent, localization);
-        FreeFormatMarkup markup = this.cachedMarkup.get(freeFormatContent.getId());
-        if( markup == null || markup.lastModified < zipItem.getLastModified() ) {
+        StaticContentItem zipItem = this.getZipItem(campaignContentZip, localization);
+
+        String cacheKey = campaignContentZip.getId() + "-" + localization.getId();
+        CampaignContentMarkup markup = this.cachedMarkup.get(cacheKey);
+        File baseDir = this.getBaseDir(campaignContentZip, localization);
+        
+        if( markup == null || !baseDir.exists() || !this.directoryHasFiles(baseDir) ) {
             try {
-                HtmlHolder htmlMarkup = extractZip(zipItem, this.getBaseDir(freeFormatContent, localization));
-                markup = new FreeFormatMarkup(htmlMarkup, zipItem.getLastModified());
-                this.cachedMarkup.put(freeFormatContent.getId(), markup);
+                HtmlHolder htmlMarkup = extractZip(zipItem, baseDir);
+                markup = new CampaignContentMarkup(htmlMarkup, zipItem.getLastModified());
+                this.cachedMarkup.put(cacheKey, markup);
             }
             catch ( IOException e ) {
                 throw new ContentProviderException("Could not extract free format ZIP file.", e);
             }
         }
-        String processedMarkup = this.processFreeFormatMarkup(freeFormatContent, markup.htmlMarkup, this.getAssetBaseDir(freeFormatContent, localization));
-        freeFormatContent.setProcessedContent(new RichTextFragmentImpl(processedMarkup).getHtml());
+        String processedMarkup = this.processMarkup(campaignContentZip, markup.htmlMarkup, this.getAssetBaseDir(campaignContentZip, localization));
+        campaignContentZip.setProcessedContent(new RichTextFragmentImpl(processedMarkup).getHtml());
     }
 
-    private String processFreeFormatMarkup(CampaignContentZIP freeFormatContent, HtmlHolder inputHtmlMarkup, String assetBaseDir) {
+    /**
+     * Process markup
+     * @param campaignContentZip
+     * @param inputHtmlMarkup
+     * @param assetBaseDir
+     * @return
+     */
+    protected String processMarkup(CampaignContentZIP campaignContentZip, HtmlHolder inputHtmlMarkup, String assetBaseDir) {
         Document htmlDoc = Jsoup.parse("<body>" + inputHtmlMarkup.mainHtml + "</body>");
 
         // Inject content into placeholders in the markup
         //
-        if ( freeFormatContent.getTaggedContent() != null ) {
+        if ( campaignContentZip.getTaggedContent() != null ) {
 
             int index = 1;
-            for (val taggedContent : freeFormatContent.getTaggedContent()) {
+            for (val taggedContent : campaignContentZip.getTaggedContent()) {
                 for (val element : htmlDoc.body().select("[data-content-name=" + taggedContent.getName() + "]")) {
                     String contentMarkup =
                             "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedContent[" +
@@ -151,8 +180,15 @@ public class CampaignContentController extends BaseController {
         //
         if ( inputHtmlMarkup.headerHtml != null ) {
             Document headerDoc = Jsoup.parse("<body>" + inputHtmlMarkup.headerHtml + "</body>");
+            this.processAssetLinks(headerDoc, assetBaseDir, "href");
             this.processAssetLinks(headerDoc, assetBaseDir, "src");
-            this.pluggableMarkupRegistry.registerContextualPluggableMarkup("top-js", new ParsableHtmlNode(headerDoc.body().html()));
+
+            // As contextual pluggable markup does not work for header content right now, we have to do the actual
+            // include the CSS in the top of the campaign content instead
+            //
+            //this.pluggableMarkupRegistry.registerContextualPluggableMarkup("css", new ParsableHtmlNode(headerDoc.body().html()));
+
+            htmlDoc.body().prependChild(headerDoc.body());
         }
 
         // Insert footer markup (JS etc)
@@ -166,7 +202,13 @@ public class CampaignContentController extends BaseController {
         return htmlDoc.body().html();
     }
 
-    private void processAssetLinks(Document htmlDoc, String assetBaseDir, String attributeName) {
+    /**
+     * Process asset links
+     * @param htmlDoc
+     * @param assetBaseDir
+     * @param attributeName
+     */
+    protected void processAssetLinks(Document htmlDoc, String assetBaseDir, String attributeName) {
         for ( val element : htmlDoc.body().select("[" + attributeName +"]") ) {
             String assetUrl = element.attr(attributeName);
             if ( !assetUrl.startsWith("/") && !assetUrl.startsWith("http") && !assetUrl.startsWith("#") ) {
@@ -176,10 +218,24 @@ public class CampaignContentController extends BaseController {
         }
     }
 
-    private StaticContentItem getZipItem(CampaignContentZIP freeFormatContent, Localization localization) throws ContentProviderException {
-        return contentProvider.getStaticContent(freeFormatContent.getUrl(), localization.getId(), localization.getPath());
+    /**
+     * Get ZIP item
+     * @param campaignContentZip
+     * @param localization
+     * @return
+     * @throws ContentProviderException
+     */
+    protected StaticContentItem getZipItem(CampaignContentZIP campaignContentZip, Localization localization) throws ContentProviderException {
+        return contentProvider.getStaticContent(campaignContentZip.getUrl(), localization.getId(), localization.getPath());
     }
 
+    /**
+     * Extract ZIP
+     * @param zipItem
+     * @param directory
+     * @return
+     * @throws IOException
+     */
     protected HtmlHolder extractZip(StaticContentItem zipItem, File directory) throws IOException {
 
         ByteArrayOutputStream htmlMarkup = new ByteArrayOutputStream();
@@ -247,14 +303,39 @@ public class CampaignContentController extends BaseController {
         return htmlHolder;
     }
 
-    protected File getBaseDir(CampaignContentZIP freeFormatContent, Localization localization) {
+    /**
+     * Check if a specific directory has files
+     * @param directory
+     * @return
+     */
+    protected boolean directoryHasFiles(File directory) {
+        String[] files = directory.list();
+        return files != null && files.length > 0;
+
+    }
+
+    /**
+     * Get base directory for the specified campaign content
+     * @param campaignContentZip
+     * @param localization
+     * @return base directory
+     */
+    protected File getBaseDir(CampaignContentZIP campaignContentZip, Localization localization) {
+
+        // TODO: Align with the C# version and use the same path pattern
 
         return new File(StringUtils.join(new String[]{
-                webApplicationContext.getServletContext().getRealPath("/"), "system/assets", localization.getId(), "freeformat", freeFormatContent.getId()
+                webApplicationContext.getServletContext().getRealPath("/"), "system/assets", localization.getId(), "campaign-content", campaignContentZip.getId()
         }, File.separator));
     }
 
-    protected String getAssetBaseDir(CampaignContentZIP freeFormatContent, Localization localization) {
-        return StringUtils.join(new String[]{ "/system/assets", localization.getId(), "freeformat", freeFormatContent.getId()}, File.separator);
+    /**
+     * Get asset base directory for the specified campaign content
+     * @param campaignContentZip
+     * @param localization
+     * @return asset base directory
+     */
+    protected String getAssetBaseDir(CampaignContentZIP campaignContentZip, Localization localization) {
+        return StringUtils.join(new String[]{ "/system/assets", localization.getId(), "campaign-content", campaignContentZip.getId()}, File.separator);
     }
 }
