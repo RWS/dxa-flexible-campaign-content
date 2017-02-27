@@ -96,6 +96,7 @@ Getting started
 ------------------
 
 To quickly getting started you can follow the steps below:
+
 1. Create a new page type using the new 'Campaign Page' page template
 2. Create a new multimedia component in your content structure (for example under Content/Campaigns) using the multimedia schema 'Campaign Content ZIP'
 3. Upload the [Example Campaign ZIP](./cms/example-campaign/ExampleCampaign.zip) under cms/example-campaign.
