@@ -4,8 +4,8 @@ DXA Flexible Campaign Content
 Introduction
 --------------
 
-The flexible campaign content extension make it possible for digital agencies to create campaigns (HTML, CSS,JS, images etc)
-in their own tool suites. When ready they can package all campaign assets into a ZIP and upload it into SDL Web.
+The flexible campaign content extension make it possible for digital agencies to create HTML based campaigns 
+in their own tool suites. When ready they can package all campaign assets (HTML, CSS,JS, images etc) into a ZIP and upload it into SDL Web.
 The benefit of this extension is that digital agencies are given the freedom (within some defined boundaries of the brand guidelines, used CSS framework etc)
 to build campaign content with unique layout and interaction elements. And that without the need of creating specific templates in SDL Web for the created campaign.
 
