@@ -92,6 +92,42 @@ mvn install
 3. Package your webapp and deploy into your JEE application server
 4. Now is your DXA instance ready for rendering of flexible campaign content
 
+Getting started
+------------------
+
+To quickly getting started you can follow the steps below:
+1. Create a new page type using the new 'Campaign Page' page template
+2. Create a new multimedia component in your content structure (for example under Content/Campaigns) using the multimedia schema 'Campaign Content ZIP'
+3. Upload the [Example Campaign ZIP](./cms/example-campaign/ExampleCampaign.zip) under cms/example-campaign.
+4. Save the multimedia component. All editable content is extracted from the campaign ZIP when saving it the first time.
+5. Go to your staging site and open Experience Manager. Create a new campaign page with the newly created page type.
+6. Select the uploaded campaign and drag & drop it on your page.
+7. The whole campaign should now appear and all text is inline editable. It is also possible at this step to send the campaign directly for translation.
+
+
+Setup of a campaign page
+-------------------------
+
+T.B.D.
+
+Creating campaign content
+--------------------------
+
+T.B.D
+
+
+Other uses
+-----------
+
+It can also be used to deploy SPA applications on web pages.
+
+
+Future enhancements
+--------------------
+
+* Possibility to modify the images used in the campaign
+
+
 Branching model
 ----------------
 
@@ -101,7 +137,15 @@ We intend to follow Gitflow (http://nvie.com/posts/a-successful-git-branching-mo
  - develop - Unstable
  - release/x.y - Release version x.y
 
-Please submit your pull requests on develop. In the near future we intend to push our changes to develop and master from our internal repositories, so you can follow our development process.
+ All releases (including pre-releases and hotfix releases) are tagged.
+
+ If you wish to submit a Pull Request, it should normally be submitted on the develop branch, so it can be incorporated in the upcoming release.
+
+ Fixes for really severe/urgent issues (which qualify as hotfixes) should be submitted as Pull Request on the appropriate release branch.
+
+ Please always submit an Issue for the problem and indicate whether you think it qualifies as a hotfix; Pull Requests on release branches will only be accepted after agreement on the severity of the issue. Furthermore, Pull Requests on release branches are expected to be extensively tested by the submitter.
+
+ Of course, it's also possible (and appreciated) to report an Issue without associated Pull Requests.
 
 
 License
