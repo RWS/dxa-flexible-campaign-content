@@ -4,7 +4,7 @@ DXA Flexible Campaign Content
 Introduction
 --------------
 
-The flexible campaign content extension make it possible for digital agencies to create HTML based campaigns 
+The DXA Flexible Campaign Content extension make it possible for digital agencies to create HTML based campaigns 
 in their own tool suites. When ready they can package all campaign assets (HTML, CSS,JS, images etc) into a ZIP and upload it into SDL Web.
 The benefit of this extension is that digital agencies are given the freedom (within some defined boundaries of the brand guidelines, used CSS framework etc)
 to build campaign content with unique layout and interaction elements. And that without the need of creating specific templates in SDL Web for the created campaign.
@@ -57,7 +57,7 @@ CMS:
 
 4. After that restart the services 'SDL Web Content Manager Service Host' and 'SDL Web Transport Distributor Service'
 5. Import the needed schemas and templates by following the instructions given here: [CMS import script](./cms/import/README.md)
-6. If you want to use the SDL Web Translation Manager for translating the campaigns you have to open up the embedded schema 'Campaign Content - TaggedContent'. And there mark all fields as translatable.
+6. If you want to use the SDL Web Translation Manager for translating the campaigns you have to open up the embedded schema 'Campaign Content - TaggedContent'. And there mark the field 'content' as translatable.
 
 DXA.NET:
 
@@ -101,7 +101,7 @@ To quickly getting started you can follow the steps below:
 
 1. Create a new page type using the new 'Campaign Page' page template
 2. Create a new multimedia component in your content structure (for example under Content/Campaigns) using the multimedia schema 'Campaign Content ZIP'
-3. Upload the [Example Campaign ZIP](./cms/example-campaign/ExampleCampaign.zip) under cms/example-campaign.
+3. Upload the [Example Campaign ZIP](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/example-campaign/ExampleCampaign.zip) under cms/example-campaign.
 4. Save the multimedia component. All editable content is extracted from the campaign ZIP when saving it the first time.
 5. Go to your staging site and open Experience Manager. Create a new campaign page with the newly created page type.
 6. Select the uploaded campaign and drag & drop it on your page.
