@@ -1,5 +1,6 @@
 ﻿using NSoup;
 using NSoup.Nodes;
+using Sdl.Web.Common;
 using Sdl.Web.Common.Configuration;
 using Sdl.Web.Common.Logging;
 using Sdl.Web.Common.Models;
@@ -7,11 +8,10 @@ using Sdl.Web.Mvc.Configuration;
 using Sdl.Web.Mvc.Controllers;
 using SDL.DXA.Modules.CampaignContent.Models;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 
 namespace SDL.DXA.Modules.CampaignContent.Controllers
@@ -21,6 +21,13 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
     /// </summary>
     public class CampaignContentController : BaseController
     {
+
+        private static Dictionary<string, CampaignContentMarkup> cachedMarkup = new Dictionary<string, CampaignContentMarkup>();
+        private static readonly ConcurrentDictionary<string, object> FileLocks = new ConcurrentDictionary<string, object>();
+
+        // TODO: Have some kind of cleanup thread that clean up not used campaigns
+        // TODO: Return HTTP-304 for all assets when client already has them
+
         /// <summary>
         /// Assembly Content
         /// </summary>
@@ -40,19 +47,37 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
             return View(entity.MvcData.ViewName, entity);
         }
 
-        private void ProcessMarkup(CampaignContentZIP campaignContentZip)
+        /// <summary>
+        /// Process markup. Blend the markup in the ZIP file and CMS content.
+        /// </summary>
+        /// <param name="campaignContentZip"></param>
+        protected void ProcessMarkup(CampaignContentZIP campaignContentZip)
         {
             StaticContentItem zipItem = GetZipItem(campaignContentZip);
 
             CampaignContentMarkup campaignContentMarkup;
             HtmlHolder htmlMarkup;
 
-            SiteConfiguration.CacheProvider.TryGet<CampaignContentMarkup>(campaignContentZip.Id, "CampaignContent", out campaignContentMarkup);
-            if (campaignContentMarkup == null || campaignContentMarkup.LastModified < zipItem.LastModified)
+            //SiteConfiguration.CacheProvider.TryGet<CampaignContentMarkup>(campaignContentZip.Id, "CampaignContent", out campaignContentMarkup);
+
+            string cacheKey = campaignContentZip.Id + "-" + WebRequestContext.Localization.LocalizationId;
+
+            cachedMarkup.TryGetValue(cacheKey, out campaignContentMarkup);
+            string campaignBaseDir = GetBaseDir(campaignContentZip);
+            if ( campaignContentMarkup == null || !Directory.Exists(campaignBaseDir) || Directory.GetFiles(campaignBaseDir).Length == 0 )
             {
-                htmlMarkup = ExtractZip(zipItem, GetBaseDir(campaignContentZip));
+                Log.Info("Extracting campaign " + campaignContentZip.Id + ", last modified = " + zipItem.LastModified);
+                ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified);
+                htmlMarkup = GetMarkup(campaignBaseDir);
                 campaignContentMarkup = new CampaignContentMarkup { HtmlMarkup = htmlMarkup, LastModified = zipItem.LastModified };
-                SiteConfiguration.CacheProvider.Store<CampaignContentMarkup>(campaignContentZip.Id, "CampaignContent", campaignContentMarkup);
+                //SiteConfiguration.CacheProvider.Store<CampaignContentMarkup>(campaignContentZip.Id, "CampaignContent", campaignContentMarkup);
+                cachedMarkup[cacheKey] = campaignContentMarkup;
+            }
+            else if ( campaignContentMarkup == null )
+            {
+                htmlMarkup = GetMarkup(campaignBaseDir);
+                campaignContentMarkup = new CampaignContentMarkup { HtmlMarkup = htmlMarkup, LastModified = zipItem.LastModified };
+                cachedMarkup[cacheKey] = campaignContentMarkup;
             }
             else
             {
@@ -60,6 +85,11 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
             }
 
             // Throw exception if main HTML is not found
+            //
+            if ( htmlMarkup.MainHtml == null )
+            {
+                throw new DxaException("No markup defined for campaign with ID: " + campaignContentZip.Id);
+            }
 
             var htmlDoc = NSoupClient.Parse("<body>" + htmlMarkup.MainHtml + "</body>");
 
@@ -96,7 +126,9 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
             {
                 var headerDoc = NSoupClient.Parse("<body>" + htmlMarkup.HeaderHtml + "</body>");
                 this.ProcessAssetLinks(headerDoc, assetBaseDir, "src");
-                PluggableMarkup.RegisterMarkup("top-js", headerDoc.Body.Html());
+                this.ProcessAssetLinks(headerDoc, assetBaseDir, "href");
+                PluggableMarkup.RegisterMarkup("css", headerDoc.Body.Html());
+                // TODO: Should it be called top-js?? Or have a top-css injection point as well
             }
 
             // Insert footer markup (JS etc)
@@ -112,7 +144,13 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
 
         }
 
-        private void ProcessAssetLinks(Document htmlDoc, String assetBaseDir, String attributeName)
+        /// <summary>
+        /// Process asset links so they refer to correct exposed campaign path
+        /// </summary>
+        /// <param name="htmlDoc"></param>
+        /// <param name="assetBaseDir"></param>
+        /// <param name="attributeName"></param>
+        protected void ProcessAssetLinks(Document htmlDoc, String assetBaseDir, String attributeName)
         {
             foreach (var element in htmlDoc.Body.Select("[" + attributeName + "]"))
             {
@@ -125,51 +163,106 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
             }
         }
 
-        private StaticContentItem GetZipItem(CampaignContentZIP campaignContentZip)
+        /// <summary>
+        /// Get ZIP item.
+        /// </summary>
+        /// <param name="campaignContentZip"></param>
+        /// <returns></returns>
+        protected StaticContentItem GetZipItem(CampaignContentZIP campaignContentZip)
         {
             return SiteConfiguration.ContentProvider.GetStaticContentItem(campaignContentZip.Url, WebRequestContext.Localization);
         }
 
-        private string GetBaseDir(CampaignContentZIP campaignContentZip)
+        /// <summary>
+        /// Get base directory for the specified campaign ZIP
+        /// </summary>
+        /// <param name="campaignContentZip"></param>
+        /// <returns></returns>
+        protected string GetBaseDir(CampaignContentZIP campaignContentZip)
         {
             // TODO: Have the asset base configurable
+
             return HttpContext.Server.MapPath("~/campaign-content/assets/" + WebRequestContext.Localization.LocalizationId + "/" + campaignContentZip.Id);
         }
 
-        private String GetAssetBaseDir(CampaignContentZIP campaignContentZip)
+        /// <summary>
+        /// Get asset base dir (which are exposed on the web page) for the specified campaign ZIP
+        /// </summary>
+        /// <param name="campaignContentZip"></param>
+        /// <returns></returns>
+        protected String GetAssetBaseDir(CampaignContentZIP campaignContentZip)
         {
             return "/campaign-content/assets/" + WebRequestContext.Localization.LocalizationId + "/" + campaignContentZip.Id;
         }
 
-        private HtmlHolder ExtractZip(StaticContentItem zipItem, String directory)
+        /// <summary>
+        /// Extract campaign ZIP to specified directory.
+        /// </summary>
+        /// <param name="zipItem"></param>
+        /// <param name="directory"></param>
+        /// <param name="zipLastModified"></param>
+        protected void ExtractZip(StaticContentItem zipItem, String directory, DateTime zipLastModified)
+        { 
+            lock ( GetLock(directory) )
+            {
+                if (Directory.Exists(directory))
+                {
+                    if ( Directory.GetCreationTime(directory) > zipLastModified && Directory.GetFiles(directory).Length > 0 )
+                    {
+                        Log.Info("Campaign assets in directory '" + directory + "' is already up to date. Skipping recreation of campaign assets.");
+                    }
+
+                    try
+                    {
+                        Directory.Delete(directory, true);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Warn("Could not delete cached campaign resources in: " + directory, e);
+                    }
+                }
+
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                try
+                {
+                    using (ZipArchive archive = new ZipArchive(zipItem.GetContentStream()))
+                    {
+                        archive.ExtractToDirectory(directory);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.Warn("Could not unzip campaign resources in: " + directory + ". Will rely on the current content there.", e);
+                }
+            }
+            
+        }
+
+        /// <summary>
+        /// Get campaign markup
+        /// </summary>
+        /// <param name="directory"></param>
+        /// <returns></returns>
+        protected HtmlHolder GetMarkup(string directory)
         {
             HtmlHolder htmlHolder = new HtmlHolder();
-
-            if ( Directory.Exists(directory) )
-            {
-                Directory.Delete(directory, true);
-            }
-
-            Directory.CreateDirectory(directory);
-           
-            using (ZipArchive archive = new ZipArchive(zipItem.GetContentStream()))
-            {
-                archive.ExtractToDirectory(directory);
-            }
 
             // Main HTML
             //
             string mainHtmlFile = directory + "/index.html";
-            Log.Info("Main HTML: " + mainHtmlFile);
             if (System.IO.File.Exists(mainHtmlFile))
             {
-                htmlHolder.MainHtml = System.IO.File.ReadAllText(mainHtmlFile);   
+                htmlHolder.MainHtml = System.IO.File.ReadAllText(mainHtmlFile);
             }
 
             // Header HTML
             //
             string headerHtmlFile = directory + "/header.html";
-            if ( System.IO.File.Exists(headerHtmlFile))
+            if (System.IO.File.Exists(headerHtmlFile))
             {
                 htmlHolder.HeaderHtml = System.IO.File.ReadAllText(headerHtmlFile);
             }
@@ -181,18 +274,34 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
             {
                 htmlHolder.FooterHtml = System.IO.File.ReadAllText(footerHtmlFile);
             }
-
             return htmlHolder;
         }
+
+        /// <summary>
+        /// Get a lock for use with a lock(){} block.
+        /// </summary>
+        /// <param name="name">Name of the lock</param>
+        /// <returns>The lock object</returns>
+        protected static Object GetLock(string name)
+        {
+            return FileLocks.GetOrAdd(name, s => new object());
+        }
+
     }
 
-    internal class CampaignContentMarkup
+    /// <summary>
+    /// Holder class for campaign content
+    /// </summary>
+    public class CampaignContentMarkup
     {
         internal HtmlHolder HtmlMarkup { get; set; }
         internal DateTime LastModified { get; set; }
     }
 
-    internal class HtmlHolder
+    /// <summary>
+    /// Holder class for the different HTML fragments in a campaign
+    /// </summary>
+    public class HtmlHolder
     {
         internal string HeaderHtml { get; set; }
         internal string MainHtml { get; set; }
