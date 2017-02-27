@@ -44,18 +44,20 @@ Follow the below steps to install this extension in SDL Web CMS and DXA.
 CMS:
 
 1. Either compile the C# code in the 'cms/campaign-upload-extension' directory or download the pre-compiled DDL here:
-   [campaign-upload-extension-v1.0.0.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.0.0.dll)
+    - For SDL Web 8.1.1: [campaign-upload-extension-v1.0.0-8.1.1.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.0.0-8.1.1.dll)
+    - For SDL Web 8.5: [campaign-upload-extension-v1.0.0-8.5.0.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.0.0-8.5.0.dll)
+2. If you compile the extension yourself you need to merge the DLLs into one single DLL by using [ILMerge](https://www.microsoft.com/en-us/download/details.aspx?id=17630). Use the merge_dll.bat to generate a merged DLL. 
 
-2. Upload the DLL to your SDL Web server and place it somewhere local on the server.
+3. Upload the DLL to your SDL Web server and place it somewhere local on the server. Do not forget to unblock the DLL to avoid assembly loading issues.
    Then add the following in your %SDLWEB_HOME%\config\Tridion.ContentManager.config in <extensions> tag:
 
    ```
-   <add assemblyFileName="[PATH TO DLL]\campaign-upload-extension-v1.0.0.dll"/>
+   <add assemblyFileName="[PATH TO DLL]\campaign-upload-extension-v1.0.0-[8.1.1/8.5.0].dll"/>
    ```
 
-3. After that restart the services 'SDL Web Content Manager Service Host' and 'SDL Web Transport Distributor Service'
-4. Import the needed schemas and templates by following the instructions given here: [CMS import script](./cms/import/README.md)
-5. If you want to use the SDL Web Translation Manager for translating the campaigns you have to open up the embedded schema 'Campaign Content - TaggedContent'. And there mark all fields as translatable.
+4. After that restart the services 'SDL Web Content Manager Service Host' and 'SDL Web Transport Distributor Service'
+5. Import the needed schemas and templates by following the instructions given here: [CMS import script](./cms/import/README.md)
+6. If you want to use the SDL Web Translation Manager for translating the campaigns you have to open up the embedded schema 'Campaign Content - TaggedContent'. And there mark all fields as translatable.
 
 DXA.NET:
 
