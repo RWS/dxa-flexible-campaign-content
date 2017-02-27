@@ -106,21 +106,83 @@ To quickly getting started you can follow the steps below:
 7. The whole campaign should now appear and all text is inline editable. It is also possible at this step to send the campaign directly for translation.
 
 
-Setup of a campaign page
--------------------------
-
-T.B.D.
-
 Creating campaign content
 --------------------------
 
-T.B.D
+You can create new HTML campaigns in any HTML5 compliant design tool. The campaign ZIP package contains the following:
+
+* index.html - the main HTML markup for campaign content. Is not a full HTML page, only a HTML fragment for the actual campaign. 
+* header.html - additional CSS/JS to be included on top of the page (optional)
+* footer.html - additional JS to be included on the bottom of the page (optional)
+* All needed assets such as needed CSS and javascripts (both custom ones and standard 3PPs). Plus images and other assets that referred from the HTML/CSS. The assets can be in different folders if needed.
+
+You have to add the following data attribute (on any HTML element) for all textual content that you want to editable and translatable:
+
+```
+    <h1 data-content-name="intro-text">Some texts some can be editable</h1>
+```
+
+When uploading the campaign into SDL Web all those texts and labels are extracted into a list of embedded schema fields.
+All non-absolute references to assets will be rewritten to unique campaign URLs on the DXA side. 
+The digital agency/internal web team should share the base HTML, CSS, JS which form the brand look & feel. Which is also used when develop and test
+the campaign HTML. All CSS/JS not part of the base look&feel needs to be included in the campaign ZIP.
+
+#### A simple example:
+
+index.html:
+
+```
+   <div class="main">
+      <div class="intro">
+        <img src="images/image1.jpg"/>
+        <h1 data-content-name="intro-text">Campaign intro</h1>
+      </div>
+      <div data-content-name="body-text">
+        <h3>some rich content comes here</h3>
+        <p>And some more text comes here. All this text can be modified in SDL Web.</p>
+      </div>   
+   </div>
+```
+
+header.html:
+
+```
+    <link rel="stylesheet" href="css/jquery-ui.min.css">
+    <link rel="stylesheet" href="css/example.css">
+```
+
+footer.html:
+```
+    <script src="scripts/jquery-ui.min.js"></script>
+    <script src="scripts/example.js"></script>
+```
+
+example.css:
+```
+    .intro {
+        background: url(../images/image2.jpg) no-repeat center center fixed;
+        background-size: cover;
+        padding-top: 100px;
+    }
+```
+
+Files to be included the campaign ZIP:
+
+- index.html
+- header.html
+- footer.html
+- images/image1.jpg
+- images/image2.jpg
+- css/jquery-ui.css
+- css/example.css
+- scripts/jquery-ui.min.js
+- scripts/example.js
 
 
 Other uses
 -----------
 
-It can also be used to deploy SPA applications on web pages.
+It can possibly also be used to deploy SPA applications on web pages.
 
 
 Future enhancements
