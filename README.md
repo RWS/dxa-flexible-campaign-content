@@ -73,13 +73,13 @@ DXA.Java:
 
 1. Install the DXA module in your local Maven repository by doing the following in the directory 'java/campaigncontent-dxa-module':
 
-```
-mvn install
-```
+   ```
+    mvn install
+   ```
 
 2. Add the DXA module as Maven dependency to your web application POM file:
 
-```
+   ```
     <dependencies>
         ...
         <dependency>
@@ -89,8 +89,7 @@ mvn install
         </dependency>
 
     </dependencies>
-
-```
+   ```
 
 3. Package your webapp and deploy into your JEE application server
 4. Now is your DXA instance ready for rendering of flexible campaign content
