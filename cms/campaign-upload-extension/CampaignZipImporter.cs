@@ -37,8 +37,7 @@ namespace SDL.Web.Extensions.CampaignUpload
         /// <param name="phase"></param>
         public static void OnComponentSave(Component component, SaveEventArgs args, EventPhases phase)
         {
-            Logger.Write("On Component Save", "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Information);
-    
+            // TODO: Have a better way of detecting the campaign content zip
             if ( component.ComponentType == ComponentType.Multimedia && component.MetadataSchema.Title.Equals("Campaign Content ZIP") )
             {
                 ItemFields content = new ItemFields(component.Metadata, component.MetadataSchema);
@@ -53,7 +52,7 @@ namespace SDL.Web.Extensions.CampaignUpload
 
                 // Extract ZIP and find the index.html
                 //
-                var zipFilename = "C:\\Temp\\CampaignContent_" + component.Id.ItemId + "_" + DateTime.Now.ToFileTime() + ".zip";
+                var zipFilename = Path.GetTempPath() + "\\CampaignContent_" + component.Id.ItemId + "_" + DateTime.Now.ToFileTime() + ".zip";
                 Logger.Write("Extracting ZIP: " + zipFilename, "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Information);
                 using (FileStream fs = File.Create(zipFilename))
                 {
