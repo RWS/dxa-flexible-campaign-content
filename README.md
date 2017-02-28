@@ -4,7 +4,7 @@ DXA Flexible Campaign Content
 Introduction
 --------------
 
-The DXA Flexible Campaign Content extension make it possible for digital agencies to create HTML based campaigns 
+The DXA Flexible Campaign Content extension (also known as the HTML Campaign Upload connector) make it possible for digital agencies to create HTML based campaigns 
 in their own tool suites. When ready they can package all campaign assets (HTML, CSS,JS, images etc) into a ZIP and upload it into SDL Web.
 The benefit of this extension is that digital agencies are given the freedom (within some defined boundaries of the brand guidelines, used CSS framework etc)
 to build campaign content with unique layout and interaction elements. And that without the need of creating specific templates in SDL Web for the created campaign.
@@ -35,6 +35,7 @@ Functionality
 * All editable content will be merged into the campaign markup.
 * If DXA runs in a staging mode additional XPM markup will be generated around the editable content to make it inline editable.
 
+The extension has been verified both on SDL Web 8.1.1 and SDL Web 8.5 using DXA 1.7.
 
 Installation
 --------------
@@ -101,7 +102,7 @@ To quickly getting started you can follow the steps below:
 
 1. Create a new page type using the new 'Campaign Page' page template
 2. Create a new multimedia component in your content structure (for example under Content/Campaigns) using the multimedia schema 'Campaign Content ZIP'
-3. Upload the [Example Campaign ZIP](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/example-campaign/ExampleCampaign.zip) under cms/example-campaign.
+3. Upload the [Example Campaign ZIP](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/example-campaign/ExampleCampaign.zip).
 4. Save the multimedia component. All editable content is extracted from the campaign ZIP when saving it the first time.
 5. Go to your staging site and open Experience Manager. Create a new campaign page with the newly created page type.
 6. Select the uploaded campaign and drag & drop it on your page.
@@ -110,8 +111,8 @@ To quickly getting started you can follow the steps below:
 
 Creating campaign content
 --------------------------
-
-You can create new HTML campaigns in any HTML5 compliant design tool. The campaign ZIP package contains the following:
+                                                                      
+You can create new HTML campaigns in any HTML5 compliant design tool. A campaign ZIP package can contain the following:
 
 * index.html - the main HTML markup for campaign content. Is not a full HTML page, only a HTML fragment for the actual campaign. 
 * header.html - additional CSS/JS to be included on top of the page (optional)
@@ -184,7 +185,7 @@ Files to be included the campaign ZIP:
 Other uses
 -----------
 
-It can possibly also be used to deploy SPA applications on web pages.
+The extension can possibly also be used to deploy SPA applications on web pages.
 
 
 Future enhancements
