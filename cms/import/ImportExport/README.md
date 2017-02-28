@@ -3,7 +3,6 @@ Import/Export DLLs
 
 The following DLLs/config are needed to invoke the cms-import.ps1 script:
 
-* ChikatDotNet4.dll
 * Tridion.Common.dll
 * Tridion.ContentManager.CoreService.Client.dll
 * Tridion.ContentManager.ImportExport.Client.dll
