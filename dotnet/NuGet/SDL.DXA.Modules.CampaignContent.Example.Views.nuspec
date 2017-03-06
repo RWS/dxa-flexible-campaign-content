@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <id>Sdl.Dxs.Modules.CampaignContent.Example.Views</id>
+    <version>1.0.0</version>
+    <authors>Sdl</authors>
+    <owners>Sdl</owners>
+    <summary></summary>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Sdl.Dxa.Modules.CampaignContent.Example.Views.</description>
+    <releaseNotes></releaseNotes>
+	<copyright>© Sdl 2017</copyright>
+    <dependencies>
+	  <dependency id="SDL.DXA.Modules.CampaignContent" version="1.0.0" />
+    </dependencies>
+  </metadata>
+  <files>
+	<file src="Areas\**\*.*" target="Content\Areas" />
+  </files>
+</package>
