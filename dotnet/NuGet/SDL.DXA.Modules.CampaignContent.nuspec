@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <id>Sdl.Dxa.Modules.CampaignContent</id>
+    <version>1.0.0</version>
+    <authors>Sdl</authors>
+    <owners>Sdl</owners>
+    <summary></summary>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Sdl.Dxa.Modules.CampaignContent.</description>
+    <releaseNotes></releaseNotes>
+	<copyright>© Sdl 2017</copyright>
+    <dependencies>
+      <dependency id="Microsoft.AspNet.Mvc" version="5.1.2" />
+	  <dependency id="Microsoft.CodeDom.Providers.DotNetCompilerPlatform" version="1.0.3" />
+	  <dependency id="Sdl.Dxa.Framework.Web8" version="1.7.0" />
+	  <dependency id="NSoup" version="0.8.0" />
+    </dependencies>
+  </metadata>
+  <files>
+	<file src="bin\SDL.DXA.Modules.CampaignContent.dll" target="lib\net452" />
+  </files>
+</package>
