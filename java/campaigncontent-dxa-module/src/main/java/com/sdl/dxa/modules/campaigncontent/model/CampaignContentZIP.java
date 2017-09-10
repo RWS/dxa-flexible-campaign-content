@@ -21,10 +21,24 @@ public class CampaignContentZIP extends MediaItem {
     @SemanticProperty("s:taggedContent")
     private List<TaggedContent> taggedContent;
 
+    @SemanticProperty("s:taggedImages")
+    private List<TaggedImage> taggedImages;
+
+    @SemanticProperty("s:taggedProperties")
+    private List<TaggedProperty> taggedProperties;
+
     private String processedContent;
 
     public List<TaggedContent> getTaggedContent() {
         return taggedContent;
+    }
+
+    public List<TaggedImage> getTaggedImages() {
+        return taggedImages;
+    }
+
+    public List<TaggedProperty> getTaggedProperties() {
+        return taggedProperties;
     }
 
     public String getProcessedContent() {

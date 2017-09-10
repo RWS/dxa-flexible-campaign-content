@@ -45,6 +45,8 @@ import java.util.zip.ZipInputStream;
 @RequestMapping("/system/mvc/CampaignContent/CampaignContent")
 public class CampaignContentController extends BaseController {
 
+    // TODO: Create a proxy to all assets to build better URLs and align to DXA standards
+
     private static final Logger LOG = LoggerFactory.getLogger(CampaignContentController.class);
 
     @Autowired
@@ -171,10 +173,38 @@ public class CampaignContentController extends BaseController {
             }
         }
 
+        // Inject tagged properties
+        //
+        if ( campaignContentZip.getTaggedProperties() != null ) {
+            for (val taggedProperty : campaignContentZip.getTaggedProperties() ) {
+                for (val element : htmlDoc.body().select("[data-property-name=" + taggedProperty.getName() + "]")) {
+                    element.attr(taggedProperty.getTarget(), taggedProperty.getValue());
+                }
+            }
+        }
+
         // Process assets
         //
         this.processAssetLinks(htmlDoc, assetBaseDir, "href");
         this.processAssetLinks(htmlDoc, assetBaseDir, "src");
+
+        // Inject tagged images
+        //
+        if ( campaignContentZip.getTaggedImages() != null ) {
+            int index = 1;
+            for (val taggedImage : campaignContentZip.getTaggedImages()) {
+                for (val element : htmlDoc.body().select("[data-image-name=" + taggedImage.getName() + "]")) {
+                    String xpmMarkup =
+                            "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedImages[" +
+                            index +
+                            "]/custom:image[1]\"} -->";
+
+                    element.attr("src", taggedImage.getImage().getUrl()); // Right now always assume the data tag is only used in img tags
+                    element.before(xpmMarkup);
+                }
+                index++;
+            }
+        }
 
         // Insert header markup (JS, CSS etc)
         //
