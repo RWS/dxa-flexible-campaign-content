@@ -16,6 +16,11 @@ namespace SDL.DXA.Modules.CampaignContent.Models
         [SemanticProperty("s:taggedContent")]
         public List<TaggedContent> TaggedContent { get; set; }
 
+        [SemanticProperty("s:taggedImages")]
+        public List<TaggedImage> TaggedImages { get; set; }
+
+        [SemanticProperty("s:taggedProperties")]
+        public List<TaggedProperty> TaggedProperties { get; set; }
         public string ProcessedContent { get; set; }
 
         public override string ToHtml(string widthFactor, double aspect = 0, string cssClass = null, int containerSize = 0)

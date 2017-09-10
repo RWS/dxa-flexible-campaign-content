@@ -229,6 +229,8 @@
     <Compile Include="CampaignContentAreaRegistration.cs" />
     <Compile Include="Models\CampaignContentZIP.cs" />
     <Compile Include="Models\TaggedContent.cs" />
+    <Compile Include="Models\TaggedImage.cs" />
+    <Compile Include="Models\TaggedProperty.cs" />
     <Compile Include="PluggableMarkup.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

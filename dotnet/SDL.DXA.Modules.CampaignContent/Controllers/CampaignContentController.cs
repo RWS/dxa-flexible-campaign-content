@@ -27,7 +27,8 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
 
         // TODO: Have some kind of cleanup thread that clean up not used campaigns
         // TODO: Return HTTP-304 for all assets when client already has them
-
+	// TODO: Create a proxy instead to have cleaner URLs and the possibility to return HTTP-304
+	
         /// <summary>
         /// Assembly Content
         /// </summary>
@@ -113,12 +114,45 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                 }
             }
 
+            // Inject tagged properties
+            //
+            if ( campaignContentZip.TaggedProperties != null)
+            {
+                foreach (var taggedProperty in campaignContentZip.TaggedProperties)
+                {
+                    foreach (var element in htmlDoc.Body.Select("[data-property-name=" + taggedProperty.Name + "]"))
+                    {
+                        element.Attr(taggedProperty.Target, taggedProperty.Value);
+                    }
+                }
+            }
+
             string assetBaseDir = this.GetAssetBaseDir(campaignContentZip);
 
             // Process assets
             //
             this.ProcessAssetLinks(htmlDoc, assetBaseDir, "href");
             this.ProcessAssetLinks(htmlDoc, assetBaseDir, "src");
+
+            // Inject tagged images
+            //
+            if (campaignContentZip.TaggedImages != null)
+            {
+                int index = 1;
+                foreach (var taggedImage in campaignContentZip.TaggedImages)
+                {
+                    foreach (var element in htmlDoc.Body.Select("[data-image-name=" + taggedImage.Name + "]"))
+                    {
+                        String xpmMarkup =
+                                 "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedImages[" +
+                                index +
+                                "]/custom:image[1]\"} -->";
+                        element.Attr("src", taggedImage.Image.Url);
+                        element.Before(xpmMarkup);
+                    }
+                    index++;
+                }
+            }
 
             // Insert header markup (JS, CSS etc)
             //
