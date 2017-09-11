@@ -4,7 +4,7 @@ DXA Flexible Campaign Content
 Introduction
 --------------
 
-The DXA Flexible Campaign Content extension (also known as the HTML Campaign Upload connector) make it possible for digital agencies to create HTML based campaigns 
+The DXA Flexible Campaign Content extension (also known as the HTML Campaign Upload connector) make it possible for digital agencies to create HTML based campaigns
 in their own tool suites. When ready they can package all campaign assets (HTML, CSS,JS, images etc) into a ZIP and upload it into SDL Web.
 The benefit of this extension is that digital agencies are given the freedom (within some defined boundaries of the brand guidelines, used CSS framework etc)
 to build campaign content with unique layout and interaction elements. And that without the need of creating specific templates in SDL Web for the created campaign.
@@ -29,6 +29,21 @@ Functionality
 		</div>
 	```
 * At upload of the campaign ZIP all editable content are extracted as rich text fields into SDL Web. These fields can then be modified and localized.
+* The digital agency can also mark certain images so they can be managed by the CMS using the attribute 'data-image-name'.
+
+  ```
+    <div class="hero">
+        <img data-image-name="img/default-hero-image.png"></img>
+    </div>
+  ```
+* The marked images are uploaded automatically into SDL Web and can be replaced by an editor
+* To build reusable campaigns the markup can be parameterized by using tagged properties. This done by the HTML attributes 'data-property-name' and 'data-property-target'. Currently the variables can operate on any HTML element attribute. Example:
+
+  ```
+    <div class="hero" data-property-name="hero-background-style" data-property-target="style" style="background-image: url(img/default-background-image.jpg);">
+        <img data-image-name="img/default-hero-image.png"></img>
+    </div>
+  ```
 * The campaign component in SDL Web can sent for translation using the SDL Web translation connectors for WorldServer, TMS or BeGlobal.
 * A DXA module for both DXA.Java and DXA.NET is available to be to render the uploaded campaigns.
 * The DXA module will extract all campaign assets and make them available. All assets links will be rewritten in the campaign markup to unique URLs for the published campaign.
@@ -44,16 +59,15 @@ Follow the below steps to install this extension in SDL Web CMS and DXA.
 
 CMS:
 
-1. Either compile the C# code in the 'cms/campaign-upload-extension' directory or download the pre-compiled DDL here:
-    - For SDL Web 8.1.1: [campaign-upload-extension-v1.0.0-8.1.1.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.0.0-8.1.1.dll)
-    - For SDL Web 8.5: [campaign-upload-extension-v1.0.0-8.5.0.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.0.0-8.5.0.dll)
-2. If you compile the extension yourself you need to merge the DLLs into one single DLL by using [ILMerge](https://www.microsoft.com/en-us/download/details.aspx?id=17630). Use the merge_dll.bat to generate a merged DLL. 
+1. Either compile the C# code in the 'cms/campaign-upload-extension' directory or download the pre-compiled DDL for SDL Web 8.5 here:
+    - For SDL Web 8.5: [campaign-upload-extension-v1.1.0.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.1.0.dll)
+2. If you compile the extension yourself you need to merge the DLLs into one single DLL by using [ILMerge](https://www.microsoft.com/en-us/download/details.aspx?id=17630). Use the merge_dll.bat to generate a merged DLL.
 
 3. Upload the DLL to your SDL Web server and place it somewhere local on the server. Do not forget to unblock the DLL to avoid assembly loading issues.
    Then add the following in your %SDLWEB_HOME%\config\Tridion.ContentManager.config in <extensions> tag:
 
    ```
-   <add assemblyFileName="[PATH TO DLL]\campaign-upload-extension-v1.0.0-[8.1.1/8.5.0].dll"/>
+   <add assemblyFileName="[PATH TO DLL]\campaign-upload-extension-v1.1.0.dll"/>
    ```
 
 4. After that restart the services 'SDL Web Content Manager Service Host' and 'SDL Web Transport Distributor Service'
@@ -85,7 +99,7 @@ DXA.Java:
         <dependency>
             <groupId>com.sdl.dxa.modules.campaigncontent</groupId>
             <artifactId>campaigncontent-dxa-module</artifactId>
-            <version>1.0.0</version>
+            <version>1.1.0</version>
         </dependency>
 
     </dependencies>
@@ -110,10 +124,10 @@ To quickly getting started you can follow the steps below:
 
 Creating campaign content
 --------------------------
-                                                                      
+
 You can create new HTML campaigns in any HTML5 compliant design tool. A campaign ZIP package can contain the following:
 
-* index.html - the main HTML markup for campaign content. Is not a full HTML page, only a HTML fragment for the actual campaign. 
+* index.html - the main HTML markup for campaign content. Is not a full HTML page, only a HTML fragment for the actual campaign.
 * header.html - additional CSS/JS to be included on top of the page (optional)
 * footer.html - additional JS to be included on the bottom of the page (optional)
 * All needed assets such as needed CSS and javascripts (both custom ones and standard 3PPs). Plus images and other assets that referred from the HTML/CSS. The assets can be in different folders if needed.
@@ -124,8 +138,23 @@ You have to add the following data attribute (on any HTML element) for all textu
     <h1 data-content-name="intro-text">Some texts some can be editable</h1>
 ```
 
-When uploading the campaign into SDL Web all those texts and labels are extracted into a list of embedded schema fields.
-All non-absolute references to assets will be rewritten to unique campaign URLs on the DXA side. 
+To specify that an image is replaceable by the CMS you use the following data attribute on image elements:
+
+```
+    <img data-image-name="booknow" class="book-image" src="images/booknow.png">
+```
+
+You can also use variables in your HTML markup that can be managed by CMS. The variables replace a certain HTML element attribute values such as background image, CSS class/style etc. You use the following data attributes to accomplish that:
+
+```
+<div data-property-name="testimonials-class" data-property-target="class" class="default-testimonials">
+    <p data-content-name="quote1" class="quote">"Best thing I've done in my life!"</p>
+    <p class="quote-name">Andrew Smith, London</p>
+  </div>
+```
+
+When uploading the campaign into SDL Web all marked textual content, images and property variables are extracted into a list of embedded schema fields.
+All non-absolute references to assets will be rewritten to unique campaign URLs on the DXA side.
 The digital agency/internal web team should share the base HTML, CSS, JS which form the brand look & feel. Which is also used when develop and test
 the campaign HTML. All CSS/JS not part of the base look&feel needs to be included in the campaign ZIP.
 
@@ -190,8 +219,7 @@ The extension can possibly also be used to deploy SPA applications on web pages.
 Future enhancements
 --------------------
 
-* Possibility to modify the images used in the campaign
-
+- Advanced regex expressions used in property variables
 
 Branching model
 ----------------
