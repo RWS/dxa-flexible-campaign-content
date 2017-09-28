@@ -44,6 +44,19 @@ Functionality
         <img data-image-name="img/default-hero-image.png"></img>
     </div>
   ```
+* It is possible to have several properties on one single HTML element. For the additional properties you postfix the data attribute with an index, e.g. 'data-property-name-2' and 'data-property-target-2'. Example of markup:
+
+```
+  <div
+      data-property-name="hero-background-style"
+      data-property-target="style"
+      style="background-image: url(img/default-background-image.jpg);"
+      data-property-name-2="hero-class"
+      data-property-target-2="class"
+      class="hero">
+      <img data-image-name="img/default-hero-image.png"></img>
+  </div>
+```
 * The campaign component in SDL Web can sent for translation using the SDL Web translation connectors for WorldServer, TMS or BeGlobal.
 * A DXA module for both DXA.Java and DXA.NET is available to be to render the uploaded campaigns.
 * The DXA module will extract all campaign assets and make them available. All assets links will be rewritten in the campaign markup to unique URLs for the published campaign.
