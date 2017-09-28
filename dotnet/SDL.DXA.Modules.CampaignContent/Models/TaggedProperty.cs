@@ -17,5 +17,9 @@ namespace SDL.DXA.Modules.CampaignContent.Models
 
         [SemanticProperty("e:target")]
         public string Target { get; set; }
+
+        [SemanticProperty("e:index")]
+        public int? Index { get; set; }
+
     }
 }

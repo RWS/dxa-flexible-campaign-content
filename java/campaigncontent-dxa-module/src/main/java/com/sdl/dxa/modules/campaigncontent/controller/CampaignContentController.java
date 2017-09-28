@@ -177,7 +177,12 @@ public class CampaignContentController extends BaseController {
         //
         if ( campaignContentZip.getTaggedProperties() != null ) {
             for (val taggedProperty : campaignContentZip.getTaggedProperties() ) {
-                for (val element : htmlDoc.body().select("[data-property-name=" + taggedProperty.getName() + "]")) {
+                Integer index = taggedProperty.getIndex();
+                String indexSuffix = "";
+                if ( index != null && index > 1 ) {
+                    indexSuffix = "-" + index;
+                }
+                for (val element : htmlDoc.body().select("[data-property-name" + indexSuffix  + "=" + taggedProperty.getName() + "]")) {
                     element.attr(taggedProperty.getTarget(), taggedProperty.getValue());
                 }
             }

@@ -172,32 +172,52 @@ namespace SDL.Web.Extensions.CampaignUpload
                         {
                             Logger.Write("Processing property tag...", "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Information);
 
-                            var propertyName = node.Attributes["data-property-name"];
-                            var propertyTarget = node.Attributes["data-property-target"];
-                            if ( propertyTarget == null ) {
-                                Logger.Write("Missing property target for property '" + propertyName.Value + "'. Skpping property...", "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Warning);
-                                continue;
+                            int index = 1;
+                            string indexSuffix = "";
+                            while (true)
+                            {
+                                if ( ! node.Attributes.Contains("data-property-name" + indexSuffix) || 
+                                     ! node.Attributes.Contains("data-property-target" + indexSuffix) )
+                                {
+                                    break;
+                                }
+                                var propertyName = node.Attributes["data-property-name" + indexSuffix];
+                                var propertyTarget = node.Attributes["data-property-target" + indexSuffix];
+                                if (propertyTarget == null)
+                                {
+                                    Logger.Write("Missing property target for property '" + propertyName.Value + "'. Skpping property...", "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Warning);
+                                    continue;
+                                }
+                                var propertyValue = node.Attributes[propertyTarget.Value];
+
+                                var taggedPropertyXml = new StringBuilder();
+                                taggedPropertyXml.Append("<TaggedProperty xmlns:xlink=\"http://www.w3.org/1999/xlink\"><name>");
+                                taggedPropertyXml.Append(propertyName.Value);
+                                taggedPropertyXml.Append("</name><value>");
+                                taggedPropertyXml.Append(propertyValue.Value);
+                                taggedPropertyXml.Append("</value>");
+                                if ( index > 1)
+                                {
+                                    taggedPropertyXml.Append("<index>");
+                                    taggedPropertyXml.Append(index);
+                                    taggedPropertyXml.Append("</index>");
+                                }
+                                taggedPropertyXml.Append("<target>");
+                                taggedPropertyXml.Append(propertyTarget.Value);
+                                taggedPropertyXml.Append("</target></TaggedProperty>");
+
+                                XmlDocument xmlDoc = new XmlDocument();
+                                xmlDoc.LoadXml(taggedPropertyXml.ToString());
+                                ItemFields taggedProperty = new ItemFields(xmlDoc.DocumentElement, taggedPropertySchema);
+                                taggedPropertyList.Values.Add(taggedProperty);
+
+                                index++;
+                                indexSuffix = "-" + index;
                             }
-                            var propertyValue = node.Attributes[propertyTarget.Value];
-
-                            var taggedPropertyXml = new StringBuilder();
-                            taggedPropertyXml.Append("<TaggedProperty xmlns:xlink=\"http://www.w3.org/1999/xlink\"><name>");
-                            taggedPropertyXml.Append(propertyName.Value);
-                            taggedPropertyXml.Append("</name><value>");
-                            taggedPropertyXml.Append(propertyValue.Value);
-                            taggedPropertyXml.Append("</value>");
-                            taggedPropertyXml.Append("<target>");
-                            taggedPropertyXml.Append(propertyTarget.Value);
-                            taggedPropertyXml.Append("</target></TaggedProperty>");
-
-                            XmlDocument xmlDoc = new XmlDocument();
-                            xmlDoc.LoadXml(taggedPropertyXml.ToString());
-                            ItemFields taggedProperty = new ItemFields(xmlDoc.DocumentElement, taggedPropertySchema);
-                            taggedPropertyList.Values.Add(taggedProperty);
 
                         }
 
-                            component.Metadata = content.ToXml();
+                        component.Metadata = content.ToXml();
                         component.Save();
                     }
                 }

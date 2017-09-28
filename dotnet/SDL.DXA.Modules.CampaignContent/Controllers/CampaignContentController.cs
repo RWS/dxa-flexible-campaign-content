@@ -120,7 +120,8 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
             {
                 foreach (var taggedProperty in campaignContentZip.TaggedProperties)
                 {
-                    foreach (var element in htmlDoc.Body.Select("[data-property-name=" + taggedProperty.Name + "]"))
+                    var indexSuffix = taggedProperty.Index != null && taggedProperty.Index > 1 ? "-" + taggedProperty.Index : "";
+                    foreach (var element in htmlDoc.Body.Select("[data-property-name" + indexSuffix + "=" + taggedProperty.Name + "]"))
                     {
                         element.Attr(taggedProperty.Target, taggedProperty.Value);
                     }

@@ -18,6 +18,9 @@ public class TaggedProperty extends AbstractEntityModel {
     @SemanticProperty("e:target")
     private String target;
 
+    @SemanticProperty("e:index")
+    private Integer index;
+
     public String getName() {
         return name;
     }
@@ -28,5 +31,9 @@ public class TaggedProperty extends AbstractEntityModel {
 
     public String getTarget() {
         return target;
+    }
+
+    public Integer getIndex() {
+        return index;
     }
 }
