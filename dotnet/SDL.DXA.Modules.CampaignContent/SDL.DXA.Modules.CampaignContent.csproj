@@ -225,6 +225,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controllers\CampaignAssetController.cs" />
     <Compile Include="Controllers\CampaignContentController.cs" />
     <Compile Include="CampaignContentAreaRegistration.cs" />
     <Compile Include="Models\CampaignContentZIP.cs" />
@@ -233,6 +234,8 @@
     <Compile Include="Models\TaggedProperty.cs" />
     <Compile Include="PluggableMarkup.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Provider\CampaignAssetProvider.cs" />
+    <Compile Include="Provider\CampaignContentMarkup.cs" />
   </ItemGroup>
   <ItemGroup />
   <PropertyGroup>
