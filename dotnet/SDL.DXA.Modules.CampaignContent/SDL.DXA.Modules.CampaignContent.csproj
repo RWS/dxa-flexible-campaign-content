@@ -127,9 +127,6 @@
       <HintPath>..\packages\Sdl.Web.Context.Client.8.5.0\lib\net45\Sdl.Web.Context.OData.Client.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Sdl.Web.Modules.Core">
-      <HintPath>..\lib\Sdl.Web.Modules.Core.dll</HintPath>
-    </Reference>
     <Reference Include="Sdl.Web.Mvc, Version=1.7.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Sdl.Dxa.Framework.Web8.1.7.0\lib\net452\Sdl.Web.Mvc.dll</HintPath>
       <Private>True</Private>
