@@ -28,6 +28,10 @@ Follow the setup steps given in the BUILD.md. After that do the following:
 
 1. Create a new directory under src for the example campaign for example 'example-campaign'.
 2. Unzip the ExampleCampaign.zip in this directory
-3. Create a simple test HTML file that includes your campaign HTML assets. One example is found here:[./whitelabel-test-index.html](DXA White Label Test HTML Index)
-4. Start the HTTP test server by doing: grunt serve
+3. Create a simple test HTML file that includes your campaign HTML assets. One example is found here: [DXA White Label Test HTML Index](./whitelabel-test-index.html)
+4. Start the HTTP test server by doing:
+
+   ```
+    grunt serve
+   ```  
 5. Your campaign can for example be accessed via the following URL: http://localhost:9000/example-campaign/whitelabel-test-index.html
