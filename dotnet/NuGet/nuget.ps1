@@ -10,10 +10,10 @@ Param(
     [string]$outputDirectory = $PSScriptRoot,
 
     [Parameter(Mandatory=$false, HelpMessage="SDL.DXA.Modules.CampaignContent version.")]
-    [string]$campaignContentVersion = "1.0.0",
+    [string]$campaignContentVersion = "1.1.0",
 
     [Parameter(Mandatory=$false, HelpMessage="SDL.DXA.Modules.CampaignContent.Example.Views version.")]
-    [string]$campaignContentExampleViewsVersion = "1.0.0"
+    [string]$campaignContentExampleViewsVersion = "1.1.0"
 
 )
 
