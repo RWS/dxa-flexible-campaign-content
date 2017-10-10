@@ -228,6 +228,7 @@ Files to be included the campaign ZIP:
 - scripts/jquery-ui.min.js
 - scripts/example.js
 
+A fully functional example campaign can be found here: [Example Campaign](./cms/example-campaign/README.md)
 
 Other uses
 -----------
