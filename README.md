@@ -1,10 +1,10 @@
-DXA Flexible Campaign Content
-===============================
+SDL Web Instant Campaign (aka DXA Flexible Campaign Content)
+=============================================================
 
 Introduction
 --------------
 
-The DXA Flexible Campaign Content extension (also known as the HTML Campaign Upload connector) make it possible for digital agencies to create HTML based campaigns
+The SDL Web Instant Campaign extension (also known as DXA Flexible Campaign Content) make it possible for digital agencies to create HTML based campaigns
 in their own tool suites. When ready they can package all campaign assets (HTML, CSS,JS, images etc) into a ZIP and upload it into SDL Web.
 The benefit of this extension is that digital agencies are given the freedom (within some defined boundaries of the brand guidelines, used CSS framework etc)
 to build campaign content with unique layout and interaction elements. And that without the need of creating specific templates in SDL Web for the created campaign.
@@ -74,6 +74,8 @@ CMS:
 
 1. Either compile the C# code in the 'cms/campaign-upload-extension' directory or download the pre-compiled DDL for SDL Web 8.5 here:
     - For SDL Web 8.5: [campaign-upload-extension-v1.1.0.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.1.0.dll)
+    - For SDL Web 8.1.1:
+    [campaign-upload-extension-v1.1.0-8.1.1.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.1.0-8.1.1.dll)
 2. If you compile the extension yourself you need to merge the DLLs into one single DLL by using [ILMerge](https://www.microsoft.com/en-us/download/details.aspx?id=17630). Use the merge_dll.bat to generate a merged DLL.
 
 3. Upload the DLL to your SDL Web server and place it somewhere local on the server. Do not forget to unblock the DLL to avoid assembly loading issues.
@@ -154,8 +156,12 @@ You have to add the following data attribute (on any HTML element) for all textu
 To specify that an image is replaceable by the CMS you use the following data attribute on image elements:
 
 ```
-    <img data-image-name="booknow" class="book-image" src="images/booknow.png">
+   <div>
+     <img data-image-name="booknow" class="book-image" src="images/booknow.png">
+   </div>  
 ```
+
+If you run into problems to make the image selectable in XPM, you can try to surround it with a div. That often solves the problem.
 
 You can also use variables in your HTML markup that can be managed by CMS. The variables replace a certain HTML element attribute values such as background image, CSS class/style etc. You use the following data attributes to accomplish that:
 
@@ -233,6 +239,8 @@ Future enhancements
 --------------------
 
 - Advanced regex expressions used in property variables
+- Separate the metadata into a separate component to improve localisation
+- Possibility to define a name space on the campaign data attributes
 
 Branching model
 ----------------
