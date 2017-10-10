@@ -1,0 +1,294 @@
+/*** CSS for the example campaign ****/
+
+.navbar-default {
+    margin-bottom: 0px;
+}
+
+.campaign-hero {
+    position: relative;
+    overflow: hidden;
+}
+
+.campaign-hero-image {
+    background: url(../images/climber-on-mountain.jpg) no-repeat center;
+    background-size: cover;
+    width: 100%;
+    height: 500px;
+    transition: all 2s ease;
+    -moz-transition: all 2s ease;
+    -ms-transition: all 2s ease;
+    -webkit-transition: all 2s ease;
+    -o-transition: all 2s ease;
+}
+
+.scroll-down {
+    transform: scale(1.5);
+    -moz-transform: scale(1.5);
+    -webkit-transform: scale(1.5);
+    -o-transform: scale(1.5);
+    -ms-transform: scale(1.5); /* IE 9 */
+    -ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=1.5, M12=0, M21=0, M22=1.5, SizingMethod='auto expand')"; /* IE8 */
+    filter: progid:DXImageTransform.Microsoft.Matrix(M11=1.5, M12=0, M21=0, M22=1.5, SizingMethod='auto expand'); /* IE6 and 7 */
+}
+
+.campaign-hero-text {
+    position: absolute;
+    top: 16%;
+    right: 14%;
+}
+
+.campaign-hero-text h1 {
+    font-size: 63px;
+    text-shadow: 2px 2px lightgrey;
+}
+
+.campaign-intro {
+    height: 250px;
+    color: white !important;
+    position: relative;
+}
+
+.content-block-one {
+    margin-bottom: 0px;
+    color: inherit;
+    background-color: #eee;
+
+}
+
+.campaign-text {
+    position: absolute;
+    bottom: 16px;
+    padding-left: 30px;
+    padding-right: 30px;
+}
+
+.content-block-one h1,
+.content-block-one .h1 {
+    color: inherit;
+}
+
+.content-block-one p {
+    margin-bottom: 15px;
+    font-size: 21px;
+    font-weight: 200;
+}
+
+.content-block-one > hr {
+    border-top-color: #d5d5d5;
+}
+
+.container .content-block-one {
+    border-radius: 6px;
+}
+
+.content-block-one .container {
+    max-width: 100%;
+}
+
+@media screen and (min-width: 768px) {
+
+    .container .content-block-one {
+        padding-right: 60px;
+        padding-left: 60px;
+    }
+
+    .content-block-one h1,
+    .content-block-one .h1 {
+        font-size: 63px;
+    }
+}
+
+.content-space-one {
+    padding: 0px;
+    margin-bottom: 0px;
+    color: inherit;
+    background: url(../images/magic-forest.jpg) no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    padding-top: 100px;
+    padding-bottom: 100px;
+}
+
+.content-space-two {
+    padding: 0px;
+    margin-bottom: 0px;
+    color: inherit;
+    background: url(../images/aurora-borealis-lofoten-norway-night.jpg) no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    padding-top: 100px;
+    padding-bottom: 100px;
+}
+
+.content-space-three {
+    position: relative;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    margin-left: 58%;
+    height: 100%;
+}
+
+.block-image, .block-image img {
+    height: 100%;
+    width: 100%;
+}
+
+.revealed-info {
+    color: white;
+    background-color: transparent;
+}
+
+.testimonials {
+    background: url(../images/sunset-over-mountains.jpg) no-repeat center center;
+    background-size: cover;
+    position: relative;
+    height: 200px;
+    color: white;
+}
+
+.quote-block {
+    position: absolute;
+}
+
+.quote {
+    font-style: italic;
+}
+
+.quote-name {
+    margin-top: -16px;
+    margin-left: 16px;
+}
+
+.content-block-three {
+    padding-top: 12px;
+    padding-left: 24px;
+    text-align: center;
+    color: white;
+    position: absolute;
+    top: 0px;
+}
+
+.content-block-three h1,
+.content-block-three .h1 {
+    font-size: 63px;
+}
+
+.page-break {
+    width: 50%;
+    height: 3px;
+    background-color: #fff;
+    margin: 0 auto;
+}
+
+.info-section {
+    height: 453px;
+}
+
+.text-center {
+    color: white;
+}
+
+/*** Draggable sections ***/
+
+.draggable_boxed {
+    overflow: hidden;
+    clip: rect(auto, auto, auto, auto);
+    position: absolute;
+
+}
+
+.draggable_boxed_fw {
+    width: 58%;
+}
+
+.draggable_revelead {
+    top: 0;
+    z-index: 1;
+    position: absolute;
+}
+
+.draggable_content {
+    border-left: 1px solid #000;
+    margin-left: -1px;
+    z-index: 2;
+    position: relative;
+}
+
+.draggable_content img {
+    width: 178px;
+    height: 35px;
+    border-top: 1px solid #000;
+    border-right: 1px solid #000;
+    bottom: 0;
+    left: 0;
+    position: absolute;
+}
+
+.draggable_boxed_fw .draggable_revelead {
+    height: 453px;
+}
+
+.draggable_boxed_fw .draggable_wrapper {
+    width: 1896px;
+    /* preserve 20px */
+    height: 453px;
+}
+
+.draggable_boxed_fw .draggable_content {
+    width: 60%; /*958px;*/
+    height: 453px;
+}
+
+.draggable_boxed_small .draggable_revelead {
+    width: 455px;
+    height: 570px;
+}
+
+.draggable_boxed_small_ch .draggable_revelead {
+    width: 570px;
+    height: 486px;
+}
+
+/* dragable content */
+
+.draggable_overlay_1 {
+    background: url(../images/arizona-desert.jpg) no-repeat scroll 0 0;
+    background-size: cover;
+}
+
+.draggable_revelead_1 {
+    background: url(../images/arizona-moonlight.jpg) no-repeat scroll 0 0;
+    background-size: cover;
+    width: 100%;
+}
+
+/* CTA */
+
+.cta-content-block {
+    padding: 0px;
+    margin-bottom: 0px;
+    height: 400px;
+    color: inherit;
+    background: url(../images/enjoying-waterfall.jpg) no-repeat fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    padding-top: 100px;
+    padding-bottom: 100px;
+}
+
+.book-block {
+    margin-top: 32px;
+    padding-bottom: 32px;
+}
+
+.book-button {
+    font-size: 32px;
+}
