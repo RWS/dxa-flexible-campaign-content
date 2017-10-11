@@ -37,11 +37,11 @@ Functionality
     </div>
   ```
 * The marked images are uploaded automatically into SDL Web and can be replaced by an editor
-* To build reusable campaigns the markup can be parameterized by using tagged properties. This done by the HTML attributes 'data-property-name' and 'data-property-target'. Currently the variables can operate on any HTML element attribute. Example:
+* To build reusable campaigns the markup can be parameterized by using tagged properties. This done by the HTML attributes 'data-property-name' and 'data-property-target'. Currently the properties can operate on any HTML element attribute. Example:
 
   ```
     <div class="hero" data-property-name="hero-background-style" data-property-target="style" style="background-image: url(img/default-background-image.jpg);">
-        <img data-image-name="img/default-hero-image.png"></img>
+        <h1>Welcome!</h1>
     </div>
   ```
 * It is possible to have several properties on one single HTML element. For the additional properties you postfix the data attribute with an index, e.g. 'data-property-name-2' and 'data-property-target-2'. Example of markup:
@@ -163,7 +163,7 @@ To specify that an image is replaceable by the CMS you use the following data at
 
 If you run into problems to make the image selectable in XPM, you can try to surround it with a div. That often solves the problem.
 
-You can also use variables in your HTML markup that can be managed by CMS. The variables replace a certain HTML element attribute values such as background image, CSS class/style etc. You use the following data attributes to accomplish that:
+You can also use properties in your HTML markup that can be managed by CMS. The properties replace certain HTML element attribute values such as background image, CSS class/style etc. You use the following data attributes to accomplish that:
 
 ```
 <div data-property-name="testimonials-class" data-property-target="class" class="default-testimonials">
