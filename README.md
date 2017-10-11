@@ -91,7 +91,7 @@ CMS:
 
 DXA.NET:
 
-1. If you do not have a DXA.NET setup (for SDL Web 8/8.5) you can easily do this by following the instructions given here: [Installing the web application (.NET)](http://docs.sdl.com/LiveContent/content/en-US/SDL%20DXA-v6/GUID-8633F5AE-8472-4D53-AD38-A7A33DD1F5A3)
+1. If you do not have a DXA.NET setup (for SDL Web 8/8.5) you can easily do this by following the instructions given here: [Installing the web application (.NET)](http://docs.sdl.com/LiveContent/web/pub.xql?action=home&pub=SDL%20DXA-v7&lang=en-US)
 2. Either open up the solution 'dotnet/SDL.DXA.Modules.CampaignContent.sln' or add the VS project under the directory 'dotnet' to your Visual Studio solution
 4. Set the environment variable %DXA_SITE_DIR% to point to your DXA Site path (in visual studio or in your IIS instance)
 5. Restart Visual studio and rebuild the solution. Verify so the CampaignContent Area and DLLs are copied to your site folder
@@ -134,7 +134,7 @@ To quickly getting started you can follow the steps below:
 4. Save the multimedia component. All editable content is extracted from the campaign ZIP when saving it the first time.
 5. Go to your staging site and open Experience Manager. Create a new campaign page with the newly created page type.
 6. Select the uploaded campaign and drag & drop it on your page.
-7. The whole campaign should now appear and all text is inline editable. It is also possible at this step to send the campaign directly for translation.
+7. The whole campaign should now appear and all text are inline editable. It is also possible at this step to send the campaign directly for translation.
 
 
 Creating campaign content
