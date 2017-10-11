@@ -53,13 +53,6 @@
             <artifactId>dxa-tridion-provider</artifactId>
         </dependency>
 
-        <!-- DXA Core module -->
-        <dependency>
-            <groupId>com.sdl.dxa.modules</groupId>
-            <artifactId>dxa-module-core</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
         <!-- Google Guava -->
         <dependency>
             <groupId>com.google.guava</groupId>
