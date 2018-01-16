@@ -6,7 +6,7 @@
     {
         public virtual string GetSiteBaseUrl()
         {
-            return WebRequestContext.Localization.GetBaseUrl();
+            return WebRequestContext.Localization.Path;
         }
     }
 }
