@@ -16,6 +16,12 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
     /// </summary>
     public class CampaignContentController : BaseController
     {
+        private readonly SiteBaseUrlProvider _siteBaseUrlProvider;
+
+        public CampaignContentController(SiteBaseUrlProvider siteBaseUrlProvider = null)
+        {
+            _siteBaseUrlProvider = siteBaseUrlProvider ?? new SiteBaseUrlProvider();
+        }
 	
         /// <summary>
         /// Assembly Content
@@ -164,7 +170,7 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
         /// <returns></returns>
         protected String GetAssetBaseDir(CampaignContentZIP campaignContentZip)
         {
-            return WebRequestContext.Localization.GetBaseUrl() + "/assets/campaign/" + campaignContentZip.Id;
+            return _siteBaseUrlProvider.GetSiteBaseUrl() + "/assets/campaign/" + campaignContentZip.Id;
         }
 
     }

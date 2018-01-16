@@ -24,6 +24,7 @@
     <UseGlobalApplicationHostFile />
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <Use64BitIISExpress />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -231,6 +232,7 @@
     <Compile Include="Models\TaggedProperty.cs" />
     <Compile Include="PluggableMarkup.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Provider\SiteBaseUrlProvider.cs" />
     <Compile Include="Provider\CampaignAssetProvider.cs" />
     <Compile Include="Provider\CampaignContentMarkup.cs" />
   </ItemGroup>
