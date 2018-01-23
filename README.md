@@ -57,6 +57,7 @@ Functionality
       <img data-image-name="img/default-hero-image.png"></img>
   </div>
 ```
+* The image URLs used in property values can also be selected from Tridion. Then you need to use the inline property `%URL%` when you configure the value in Tridion. For example: `background-image: url(%URL%);`  
 * The campaign component in SDL Web can sent for translation using the SDL Web translation connectors for WorldServer, TMS or BeGlobal.
 * A DXA module for both DXA.Java and DXA.NET is available to be to render the uploaded campaigns.
 * The DXA module will extract all campaign assets and make them available. All assets links will be rewritten in the campaign markup to unique URLs for the published campaign.

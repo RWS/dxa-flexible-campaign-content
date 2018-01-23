@@ -1,6 +1,7 @@
 ﻿using NSoup;
 using NSoup.Nodes;
 using Sdl.Web.Common;
+using Sdl.Web.Common.Logging;
 using Sdl.Web.Common.Models;
 using Sdl.Web.Mvc.Configuration;
 using Sdl.Web.Mvc.Controllers;
@@ -88,7 +89,12 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                     var indexSuffix = taggedProperty.Index != null && taggedProperty.Index > 1 ? "-" + taggedProperty.Index : "";
                     foreach (var element in htmlDoc.Body.Select("[data-property-name" + indexSuffix + "=" + taggedProperty.Name + "]"))
                     {
-                        element.Attr(taggedProperty.Target, taggedProperty.Value);
+                        var propertyValue = taggedProperty.Value;
+                        if ( taggedProperty.Image != null )
+                        {
+                            propertyValue = propertyValue.Replace("%URL%", taggedProperty.Image.Url);
+                        }
+                        element.Attr(taggedProperty.Target, propertyValue);
                     }
                 }
             }
