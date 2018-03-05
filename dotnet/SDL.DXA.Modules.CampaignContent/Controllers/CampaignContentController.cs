@@ -69,11 +69,15 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                 {
                     foreach (var element in htmlDoc.Body.Select("[data-content-name=" + taggedContent.Name + "]"))
                     {
-                        String contentMarkup =
-                                "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedContent[" +
+                        String contentMarkup = taggedContent.Content.ToString();
+
+                        if (WebRequestContext.IsPreview)
+                        {
+                            contentMarkup = "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedContent[" +
                                 index +
-                                "]/custom:content[1]\"} -->" +
-                                taggedContent.Content.ToString();
+                                "]/custom:content[1]\"} -->" + contentMarkup;
+                        }
+
                         element.Html(contentMarkup);
                     }
                     index++;
@@ -84,6 +88,7 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
             //
             if ( campaignContentZip.TaggedProperties != null)
             {
+                int index = 1;
                 foreach (var taggedProperty in campaignContentZip.TaggedProperties)
                 {
                     var indexSuffix = taggedProperty.Index != null && taggedProperty.Index > 1 ? "-" + taggedProperty.Index : "";
@@ -95,7 +100,17 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                             propertyValue = propertyValue.Replace("%URL%", taggedProperty.Image.Url);
                         }
                         element.Attr(taggedProperty.Target, propertyValue);
+
+                        if (WebRequestContext.IsPreview)
+                        {
+                            String xpmMarkup =
+                                 "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedProperties[" +
+                                index +
+                                "]/custom:image[1]\"} -->";
+                            element.Before(xpmMarkup);
+                        }
                     }
+                    index++;
                 }
             }
 
@@ -115,12 +130,16 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                 {
                     foreach (var element in htmlDoc.Body.Select("[data-image-name=" + taggedImage.Name + "]"))
                     {
-                        String xpmMarkup =
+                        element.Attr("src", taggedImage.Image.Url);
+
+                        if (WebRequestContext.IsPreview)
+                        {
+                            String xpmMarkup =
                                  "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedImages[" +
                                 index +
                                 "]/custom:image[1]\"} -->";
-                        element.Attr("src", taggedImage.Image.Url);
-                        element.Before(xpmMarkup);
+                            element.Before(xpmMarkup);
+                        }                        
                     }
                     index++;
                 }

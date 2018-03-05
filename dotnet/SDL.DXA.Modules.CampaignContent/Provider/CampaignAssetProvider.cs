@@ -79,6 +79,15 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
                 campaignContentMarkup.LastModified = zipItem.LastModified;
                 cachedMarkup[cacheKey] = campaignContentMarkup;
             }
+            else if (zipItem.LastModified > campaignContentMarkup.LastModified)
+            {
+                Log.Info("Zip has changed. Extracting campaign " + campaignContentZip.Id + ", last modified = " + zipItem.LastModified);
+                ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified);
+                campaignContentMarkup = GetMarkup(campaignBaseDir);
+                campaignContentMarkup.LastModified = zipItem.LastModified;
+                //SiteConfiguration.CacheProvider.Store<CampaignContentMarkup>(campaignContentZip.Id, "CampaignContent", campaignContentMarkup);
+                cachedMarkup[cacheKey] = campaignContentMarkup;
+            }
 
             return campaignContentMarkup;
         }
