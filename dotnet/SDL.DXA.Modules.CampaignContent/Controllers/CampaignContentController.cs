@@ -84,6 +84,7 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
             //
             if ( campaignContentZip.TaggedProperties != null)
             {
+                int index = 1;
                 foreach (var taggedProperty in campaignContentZip.TaggedProperties)
                 {
                     var indexSuffix = taggedProperty.Index != null && taggedProperty.Index > 1 ? "-" + taggedProperty.Index : "";
@@ -95,7 +96,14 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                             propertyValue = propertyValue.Replace("%URL%", taggedProperty.Image.Url);
                         }
                         element.Attr(taggedProperty.Target, propertyValue);
+
+                        String xpmMarkup =
+                                 "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedProperties[" +
+                                index +
+                                "]/custom:image[1]\"} -->";
+                        element.Before(xpmMarkup);
                     }
+                    index++;
                 }
             }
 
