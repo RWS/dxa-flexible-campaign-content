@@ -107,7 +107,7 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                                  "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedProperties[" +
                                 index +
                                 "]/custom:image[1]\"} -->";
-                            element.Before(xpmMarkup);
+                            element.Prepend(xpmMarkup);
                         }
                     }
                     index++;
