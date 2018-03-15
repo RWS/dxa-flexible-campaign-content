@@ -142,6 +142,13 @@
 .revealed-info {
     color: white;
     background-color: transparent;
+    margin-left: 8px;
+    margin-right: 16px;
+}
+
+.revealed-info a {
+  color: white;
+  text-decoration: underline;
 }
 
 .testimonials {

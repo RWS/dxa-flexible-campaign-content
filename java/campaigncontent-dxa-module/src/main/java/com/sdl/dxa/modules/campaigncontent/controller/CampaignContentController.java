@@ -142,6 +142,20 @@ public class CampaignContentController extends BaseController {
             }
         }
 
+        // Inject tagged links
+        //
+        if ( campaignContentZip.getTaggedLinks() != null ) {
+            for (val taggedLink : campaignContentZip.getTaggedLinks() ) {
+                for (val element : htmlDoc.body().select("[data-link-name" + "=" + taggedLink.getName() + "]")) {
+                    String href = taggedLink.getComponentLink();
+                    if ( href == null ) {
+                        href = taggedLink.getUrl();
+                    }
+                    element.attr("href", href);
+                }
+            }
+        }
+
         // Process assets
         //
         this.processAssetLinks(htmlDoc, assetBaseDir, "href");

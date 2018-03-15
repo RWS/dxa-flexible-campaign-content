@@ -48,6 +48,7 @@ namespace SDL.Web.Extensions.CampaignUpload
                 EmbeddedSchemaField taggedContentList = (EmbeddedSchemaField)content["taggedContent"];
                 EmbeddedSchemaField taggedImageList = (EmbeddedSchemaField)content["taggedImages"];
                 EmbeddedSchemaField taggedPropertyList = (EmbeddedSchemaField)content["taggedProperties"];
+                EmbeddedSchemaField taggedLinkList = (EmbeddedSchemaField)content["taggedLinks"];
 
                 var orgItem = component.OrganizationalItem;
 
@@ -88,6 +89,7 @@ namespace SDL.Web.Extensions.CampaignUpload
                         ProcessContent(htmlDoc, taggedContentList);
                         ProcessImages(htmlDoc, taggedImageList, orgItem, component.Title, archive);
                         ProcessProperties(htmlDoc, taggedPropertyList);
+                        ProcessLinks(htmlDoc, taggedLinkList);
 
                         component.Metadata = content.ToXml();
                         component.Save();
@@ -278,5 +280,35 @@ namespace SDL.Web.Extensions.CampaignUpload
 
             }
         }
+
+        /// <summary>
+        /// Process links
+        /// </summary>
+        /// <param name="htmlDoc"></param>
+        /// <param name="taggedLinkList"></param>
+        private static void ProcessLinks(HtmlDocument htmlDoc, EmbeddedSchemaField taggedLinkList)
+        {
+            Schema taggedLinkSchema = ((EmbeddedSchemaFieldDefinition)taggedLinkList.Definition).EmbeddedSchema;
+            foreach (var node in htmlDoc.DocumentNode.QuerySelectorAll("[data-link-name]"))
+            {
+                var taggedLinkXml = new StringBuilder();
+                taggedLinkXml.Append("<TaggedLink><name>");
+                taggedLinkXml.Append(node.Attributes["data-link-name"].Value);
+                taggedLinkXml.Append("</name>");
+                var linkValue = node.Attributes["href"];
+                if (linkValue != null)
+                {
+                    taggedLinkXml.Append("<url>");
+                    taggedLinkXml.Append(linkValue.Value);
+                    taggedLinkXml.Append("</url>");
+                }
+                taggedLinkXml.Append("</TaggedLink>");
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.LoadXml(taggedLinkXml.ToString());
+                ItemFields taggedLinks = new ItemFields(xmlDoc.DocumentElement, taggedLinkSchema);
+                taggedLinkList.Values.Add(taggedLinks);
+            }
+        }
     }
+    
 }

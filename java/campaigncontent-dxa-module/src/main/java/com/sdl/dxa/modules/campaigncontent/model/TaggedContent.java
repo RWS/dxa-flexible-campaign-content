@@ -25,6 +25,10 @@ public class TaggedContent extends AbstractEntityModel {
         return content;
     }
 
+    public void setContent(RichText content) {
+        this.content = content;
+    }
+
     public String getName() {
         return name;
     }

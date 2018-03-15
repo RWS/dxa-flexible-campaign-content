@@ -27,6 +27,9 @@ public class CampaignContentZIP extends MediaItem {
     @SemanticProperty("s:taggedProperties")
     private List<TaggedProperty> taggedProperties;
 
+    @SemanticProperty("s:taggedLinks")
+    private List<TaggedLink> taggedLinks;
+
     private String processedContent;
 
     public List<TaggedContent> getTaggedContent() {
@@ -39,6 +42,10 @@ public class CampaignContentZIP extends MediaItem {
 
     public List<TaggedProperty> getTaggedProperties() {
         return taggedProperties;
+    }
+
+    public List<TaggedLink> getTaggedLinks() {
+        return taggedLinks;
     }
 
     public String getProcessedContent() {

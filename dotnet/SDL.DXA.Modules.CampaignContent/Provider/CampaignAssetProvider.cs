@@ -107,7 +107,6 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
             {
                 return campaignContentMarkup.LastModified;
             }
-
             else
             {
                 return DateTime.Now;

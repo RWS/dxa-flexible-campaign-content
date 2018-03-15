@@ -114,6 +114,21 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                 }
             }
 
+            // Inject tagged links
+            //
+            if ( campaignContentZip.TaggedLinks != null )
+            {
+                int index = 1;
+                foreach (var taggedLink in campaignContentZip.TaggedLinks)
+                {
+                    foreach (var element in htmlDoc.Body.Select("[data-link-name=" + taggedLink.Name + "]"))
+                    {
+                        var link = taggedLink.ComponentLink ?? taggedLink.Url;
+                        element.Attr("href", link);
+                    }
+                    index++;
+                }
+            }
             string assetBaseDir = this.GetAssetBaseDir(campaignContentZip);
 
             // Process assets
