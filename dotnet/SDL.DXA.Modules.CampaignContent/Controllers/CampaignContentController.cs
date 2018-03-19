@@ -1,7 +1,6 @@
 ﻿using NSoup;
 using NSoup.Nodes;
 using Sdl.Web.Common;
-using Sdl.Web.Common.Logging;
 using Sdl.Web.Common.Models;
 using Sdl.Web.Mvc.Configuration;
 using Sdl.Web.Mvc.Controllers;
@@ -99,7 +98,7 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                         {
                             propertyValue = propertyValue.Replace("%URL%", taggedProperty.Image.Url);
                         }
-                        element.Attr(taggedProperty.Target, propertyValue);
+                        element.Attr(taggedProperty.Target, propertyValue ?? string.Empty);
 
                         if (WebRequestContext.IsPreview)
                         {
@@ -124,7 +123,8 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                     foreach (var element in htmlDoc.Body.Select("[data-link-name=" + taggedLink.Name + "]"))
                     {
                         var link = taggedLink.ComponentLink ?? taggedLink.Url;
-                        element.Attr("href", link);
+
+                        element.Attr("href", link ?? "#");
                     }
                     index++;
                 }
@@ -145,7 +145,7 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                 {
                     foreach (var element in htmlDoc.Body.Select("[data-image-name=" + taggedImage.Name + "]"))
                     {
-                        element.Attr("src", taggedImage.Image.Url);
+                        element.Attr("src", taggedImage.Image.Url ?? string.Empty);
 
                         if (WebRequestContext.IsPreview)
                         {
