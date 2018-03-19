@@ -102,7 +102,7 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
 
                         if (WebRequestContext.IsPreview)
                         {
-                            String xpmMarkup =
+                            string xpmMarkup =
                                  "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedProperties[" +
                                 index +
                                 "]/custom:image[1]\"} -->";
@@ -125,6 +125,15 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                         var link = taggedLink.ComponentLink ?? taggedLink.Url;
 
                         element.Attr("href", link ?? "#");
+                        if (link != null && WebRequestContext.IsPreview)
+                        {
+                            var fieldName = taggedLink.ComponentLink != null ? "componentLink" : "url";
+                            string xpmMarkup =
+                                 "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedLinks[" +
+                                index +
+                                "]/custom:" + fieldName + "[1]\"} -->";
+                            element.Before(xpmMarkup);
+                        }
                     }
                     index++;
                 }
@@ -149,7 +158,7 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
 
                         if (WebRequestContext.IsPreview)
                         {
-                            String xpmMarkup =
+                            string xpmMarkup =
                                  "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedImages[" +
                                 index +
                                 "]/custom:image[1]\"} -->";
