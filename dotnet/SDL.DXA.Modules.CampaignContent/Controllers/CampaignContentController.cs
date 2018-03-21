@@ -125,14 +125,14 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                         var link = taggedLink.ComponentLink ?? taggedLink.Url;
 
                         element.Attr("href", link ?? "#");
-                        if (link != null && WebRequestContext.IsPreview)
+                        if (WebRequestContext.IsPreview)
                         {
-                            var fieldName = taggedLink.ComponentLink != null ? "componentLink" : "url";
+                            var fieldName = taggedLink.ComponentLink != null || string.IsNullOrWhiteSpace(taggedLink.Url) ? "componentLink" : "url";
                             string xpmMarkup =
                                  "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedLinks[" +
                                 index +
                                 "]/custom:" + fieldName + "[1]\"} -->";
-                            element.Before(xpmMarkup);
+                            element.Prepend(xpmMarkup);
                         }
                     }
                     index++;
