@@ -97,6 +97,16 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                         if ( taggedProperty.Image != null )
                         {
                             propertyValue = propertyValue.Replace("%URL%", taggedProperty.Image.Url);
+
+                            if (element.Attr("data-property-sibling-replace") == "true")
+                            {
+                                foreach (var sibling in element.SiblingElements)
+                                {
+                                    var siblingPropertyValue = sibling.Attr(taggedProperty.Target) ?? string.Empty;
+                                    siblingPropertyValue = siblingPropertyValue.Replace("%URL%", taggedProperty.Image.Url);
+                                    sibling.Attr(taggedProperty.Target, siblingPropertyValue);
+                                }
+                            }
                         }
                         element.Attr(taggedProperty.Target, propertyValue ?? string.Empty);
 
