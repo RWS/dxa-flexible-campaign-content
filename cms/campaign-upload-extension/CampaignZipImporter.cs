@@ -13,6 +13,8 @@ using Tridion.ContentManager.ContentManagement.Fields;
 using System.Xml;
 using System.Xml.Linq;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security;
 
 namespace SDL.Web.Extensions.CampaignUpload
 {
@@ -145,7 +147,7 @@ namespace SDL.Web.Extensions.CampaignUpload
             EmbeddedSchemaFieldDefinition taggedImageField = (EmbeddedSchemaFieldDefinition)taggedImageList.Definition;
             Schema taggedImageSchema = taggedImageField.EmbeddedSchema;
             SchemaFields taggedImageSchemaFields = new SchemaFields(taggedImageSchema);
-            MultimediaLinkFieldDefinition mmLinkFieldDef = (MultimediaLinkFieldDefinition)taggedImageSchemaFields.Fields[1];
+            MultimediaLinkFieldDefinition mmLinkFieldDef = (MultimediaLinkFieldDefinition) taggedImageSchemaFields.Fields.Where(field => field.Name.Equals("image")).First();
             Schema imageSchema = mmLinkFieldDef.AllowedTargetSchemas[0];
             Folder imageFolder = null;
 
@@ -154,20 +156,55 @@ namespace SDL.Web.Extensions.CampaignUpload
 
             foreach (var node in htmlDoc.DocumentNode.QuerySelectorAll("[data-image-name]"))
             {
-                if (imageFolder == null)
+                var imageUrl = node.Attributes["src"];
+                if (imageUrl != null && !imageUrl.Value.StartsWith("http"))
                 {
-                    imageFolder = new Folder(parentFolder.Session, parentFolder.Id);
-                    imageFolder.Title = componentTitle + " " + "Images";
-                    imageFolder.Save();
+                    if (imageFolder == null)
+                    {
+                        imageFolder = new Folder(parentFolder.Session, parentFolder.Id);
+                        imageFolder.Title = componentTitle + " " + "Images";
+                        imageFolder.Save();
+                    }
                 }
 
                 //Logger.Write("Processing image tag...", "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Information);
-
-                var imageUrl = node.Attributes["src"];
+              
                 var taggedImageName = node.Attributes["data-image-name"];
                 if (imageUrl != null && taggedImageName != null && !taggedImageNames.Contains(taggedImageName.Value) )
                 {
-                    
+                    // If an absolute image URL
+                    //
+                    if (imageUrl.Value.StartsWith("http"))
+                    {
+                        var url = imageUrl.Value;
+                        string parameters = null;
+                        if (url.Contains("?"))
+                        {
+                            var parts = url.Split(new char[] { '?' }, StringSplitOptions.RemoveEmptyEntries);
+                            url = parts[0];
+                            parameters = parts[1];
+                        }
+                        var taggedImageXml = new StringBuilder();
+                        taggedImageXml.Append("<TaggedImage xmlns:xlink=\"http://www.w3.org/1999/xlink\"><name>");
+                        taggedImageXml.Append(taggedImageName.Value);
+                        taggedImageXml.Append("</name><imageUrl>");
+                        taggedImageXml.Append(SecurityElement.Escape(url));
+                        taggedImageXml.Append("</imageUrl>");
+                        if (parameters != null)
+                        {
+                            taggedImageXml.Append("<parameters>");
+                            taggedImageXml.Append(SecurityElement.Escape(parameters));
+                            taggedImageXml.Append("</parameters>");
+                        }
+                        taggedImageXml.Append("</TaggedImage>");
+
+                        XmlDocument xmlDoc = new XmlDocument();
+                        xmlDoc.LoadXml(taggedImageXml.ToString());
+                        ItemFields taggedImage = new ItemFields(xmlDoc.DocumentElement, taggedImageSchema);
+                        taggedImageList.Values.Add(taggedImage);
+                        taggedImageNames.Add(taggedImageName.Value);
+                        continue;  
+                    }
                     ZipArchiveEntry imageEntry = archive.GetEntry(imageUrl.Value);
                     if (imageEntry != null)
                     {
