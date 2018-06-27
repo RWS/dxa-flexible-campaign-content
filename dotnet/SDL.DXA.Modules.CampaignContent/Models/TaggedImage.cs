@@ -14,5 +14,11 @@ namespace SDL.DXA.Modules.CampaignContent.Models
 
         [SemanticProperty("e:image")]
         public MediaItem Image { get; set; }
+
+        [SemanticProperty("e:imageUrl")]
+        public string ImageUrl { get; set; }
+
+        [SemanticProperty("e:parameters")]
+        public string Parameters { get; set; }
     }
 }

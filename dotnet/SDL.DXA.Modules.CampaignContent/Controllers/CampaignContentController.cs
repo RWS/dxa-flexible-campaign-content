@@ -7,6 +7,7 @@ using Sdl.Web.Mvc.Controllers;
 using SDL.DXA.Modules.CampaignContent.Models;
 using SDL.DXA.Modules.CampaignContent.Provider;
 using System;
+using System.Web.Configuration;
 using System.Web.Mvc;
 
 namespace SDL.DXA.Modules.CampaignContent.Controllers
@@ -17,10 +18,16 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
     public class CampaignContentController : BaseController
     {
         private readonly SiteBaseUrlProvider _siteBaseUrlProvider;
+        private readonly bool _useUrlParametersForLocalImages = true;
 
         public CampaignContentController(SiteBaseUrlProvider siteBaseUrlProvider = null)
         {
             _siteBaseUrlProvider = siteBaseUrlProvider ?? new SiteBaseUrlProvider();
+            var useUrlParametersConfig = WebConfigurationManager.AppSettings["instant-campaign-use-parameters-for-local-images"];
+            if (useUrlParametersConfig != null)
+            {
+                _useUrlParametersForLocalImages = bool.Parse(useUrlParametersConfig);
+            }       
         }
 	
         /// <summary>
@@ -110,7 +117,9 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                         }
                         element.Attr(taggedProperty.Target, propertyValue ?? string.Empty);
 
-                        if (WebRequestContext.IsPreview)
+                        // Generate image XPM markup if tagged property can contain/contains an image URL
+                        //
+                        if (WebRequestContext.IsPreview && propertyValue.Contains("%URL%") )
                         {
                             string xpmMarkup =
                                  "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedProperties[" +
@@ -164,7 +173,22 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                 {
                     foreach (var element in htmlDoc.Body.Select("[data-image-name=" + taggedImage.Name + "]"))
                     {
-                        element.Attr("src", taggedImage.Image.Url ?? string.Empty);
+                        var imageUrl = string.Empty;
+                        if (taggedImage.Image != null && taggedImage.Image.Url != null)
+                        {
+                            imageUrl = taggedImage.Image.Url;
+                        } 
+                        else if (taggedImage.ImageUrl != null)
+                        {
+                            imageUrl = taggedImage.ImageUrl;
+                        }
+                        if (taggedImage.Parameters != null &&
+                            (taggedImage.Image == null || 
+                             (taggedImage.Image != null && _useUrlParametersForLocalImages)))
+                        {
+                            imageUrl += "?" + taggedImage.Parameters;
+                        }
+                        element.Attr("src", imageUrl);
 
                         if (WebRequestContext.IsPreview)
                         {
@@ -172,8 +196,20 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                                  "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedImages[" +
                                 index +
                                 "]/custom:image[1]\"} -->";
-                            element.Before(xpmMarkup);
-                        }                        
+                            
+                            if (taggedImage.Image != null)
+                            {
+                                element.Before(xpmMarkup);
+                            }
+                            else
+                            {
+                                // Sorround the XPM markup in an additional span. This to avoid that the
+                                // image with absolute URL will not disappear as soon you click on it.
+                                //
+                                element.Before("<span>" + xpmMarkup + "</span>");
+                            }
+
+                        }
                     }
                     index++;
                 }
