@@ -28,7 +28,7 @@ Functionality
 		    <h1>Think layer on layer to achieve the triple denim look</h1>
 		</div>
 	```
-* At upload of the campaign ZIP all editable content are extracted as rich text fields into SDL Web. These fields can then be modified and localized.
+* At upload of the campaign ZIP all editable content are extracted as rich text fields into SDL Tridion Sites. These fields can then be modified and localized.
 * The digital agency can also mark certain images so they can be managed by the CMS using the attribute 'data-image-name'.
 
   ```
@@ -36,7 +36,7 @@ Functionality
         <img data-image-name="img/default-hero-image.png"></img>
     </div>
   ```
-* The marked images are uploaded automatically into SDL Web and can be replaced by an editor
+* The marked images are uploaded automatically into SDL Web and can be replaced by an editor. This applies to all non-absolute image URLs. For absolute URLs the image URL is stored in the CMS plus eventual URL parameters. The image with absolute URL can then be replaced by the editor with a CMS/ECL image.
 * To build reusable campaigns the markup can be parameterized by using tagged properties. This done by the HTML attributes 'data-property-name' and 'data-property-target'. Currently the properties can operate on any HTML element attribute. Example:
 
   ```
