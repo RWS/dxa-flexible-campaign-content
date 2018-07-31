@@ -75,7 +75,7 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                 {
                     foreach (var element in htmlDoc.Body.Select("[data-content-name=" + taggedContent.Name + "]"))
                     {
-                        String contentMarkup = taggedContent.Content.ToString();
+                        String contentMarkup = taggedContent.Content?.ToString() ?? string.Empty;
 
                         if (WebRequestContext.IsPreview)
                         {
