@@ -16,6 +16,8 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
     /// </summary>
     public class CampaignAssetProvider
     {
+        private const string StaticsFolder = "BinaryData";
+
         private static CampaignAssetProvider _instance = null;
 
         private static Dictionary<string, CampaignContentMarkup> cachedMarkup = new Dictionary<string, CampaignContentMarkup>();
@@ -121,7 +123,7 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
         /// <returns></returns>
         private string GetMarkupCacheKey(string campaignId, Localization localization)
         {
-            return campaignId + "-" + localization.LocalizationId;
+            return campaignId + "-" + localization.Id;
         }
 
         /// <summary>
@@ -143,7 +145,7 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
         protected string GetBaseDir(Localization localization, string campaignId)
         {
             var webAppBaseDir = HttpContext.Current.Server.MapPath("~/");
-            var baseDir = webAppBaseDir + SiteConfiguration.GetLocalStaticsFolder(localization.LocalizationId) + "/campaign-content/" + campaignId;
+            var baseDir = webAppBaseDir + GetLocalStaticsFolder(localization.Id) + "/campaign-content/" + campaignId;
             return baseDir;           
         }
 
@@ -239,5 +241,9 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
             return FileLocks.GetOrAdd(name, s => new object());
         }
 
+        private static string GetLocalStaticsFolder(string localizationId)
+        {
+            return string.Format("{0}\\{1}", StaticsFolder, localizationId);
+        }
     }
 }
