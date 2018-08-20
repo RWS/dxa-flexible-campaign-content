@@ -1,10 +1,7 @@
-﻿using Sdl.Web.Common.Configuration;
-using Sdl.Web.Common.Logging;
+﻿using Sdl.Web.Common.Logging;
 using Sdl.Web.Mvc.Configuration;
 using SDL.DXA.Modules.CampaignContent.Provider;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Configuration;
