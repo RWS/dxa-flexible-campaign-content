@@ -101,6 +101,7 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                     foreach (var element in htmlDoc.Body.Select("[data-property-name" + indexSuffix + "=" + taggedProperty.Name + "]"))
                     {
                         var propertyValue = taggedProperty.Value;
+                        var containsUrlPlaceholder = propertyValue.Contains("%URL%");
                         if ( taggedProperty.Image != null )
                         {
                             propertyValue = propertyValue.Replace("%URL%", taggedProperty.Image.Url);
@@ -119,7 +120,7 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
 
                         // Generate image XPM markup if tagged property can contain/contains an image URL
                         //
-                        if (WebRequestContext.IsPreview && propertyValue.Contains("%URL%") )
+                        if (WebRequestContext.IsPreview && containsUrlPlaceholder)
                         {
                             string xpmMarkup =
                                  "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedProperties[" +
