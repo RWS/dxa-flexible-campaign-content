@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Web;
+using Tridion.ContentDelivery.Meta;
 
 namespace SDL.DXA.Modules.CampaignContent.Provider
 {
@@ -59,20 +60,33 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
         public CampaignContentMarkup GetCampaignContentMarkup(CampaignContentZIP campaignContentZip, Localization localization)
         {
             StaticContentItem zipItem = GetZipItem(campaignContentZip, localization);
+            return LoadCampaignContentMarkup(campaignContentZip.Id, zipItem, localization);
+        }
+
+        public CampaignContentMarkup GetCampaignContentMarkup(string campaignId, Localization localization)
+        {
+            StaticContentItem zipItem = GetZipItem(campaignId, localization);
+            return LoadCampaignContentMarkup(campaignId, zipItem, localization);
+        }
+
+        /// <summary>
+        /// Load markup for a specific campaign
+        /// </summary>
+        /// <param name="campaignId"></param>
+        /// <param name="localization"></param>
+        /// <returns></returns>
+        protected CampaignContentMarkup LoadCampaignContentMarkup(string campaignId, StaticContentItem zipItem, Localization localization)
+        {
             CampaignContentMarkup campaignContentMarkup;
-
-            //SiteConfiguration.CacheProvider.TryGet<CampaignContentMarkup>(campaignContentZip.Id, "CampaignContent", out campaignContentMarkup);
-
-            string cacheKey = GetMarkupCacheKey(campaignContentZip.Id, localization);
+            string cacheKey = GetMarkupCacheKey(campaignId, localization);
             cachedMarkup.TryGetValue(cacheKey, out campaignContentMarkup);
-            string campaignBaseDir = GetBaseDir(localization, campaignContentZip.Id);
+            string campaignBaseDir = GetBaseDir(localization, campaignId);
             if (campaignContentMarkup == null || !Directory.Exists(campaignBaseDir) || Directory.GetFiles(campaignBaseDir).Length == 0)
             {
-                Log.Info("Extracting campaign " + campaignContentZip.Id + ", last modified = " + zipItem.LastModified);
+                Log.Info("Extracting campaign " + campaignId + ", last modified = " + zipItem.LastModified);
                 ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified);
                 campaignContentMarkup = GetMarkup(campaignBaseDir);
                 campaignContentMarkup.LastModified = zipItem.LastModified;
-                //SiteConfiguration.CacheProvider.Store<CampaignContentMarkup>(campaignContentZip.Id, "CampaignContent", campaignContentMarkup);
                 cachedMarkup[cacheKey] = campaignContentMarkup;
             }
             else if (campaignContentMarkup == null)
@@ -83,11 +97,10 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
             }
             else if (zipItem.LastModified > campaignContentMarkup.LastModified)
             {
-                Log.Info("Zip has changed. Extracting campaign " + campaignContentZip.Id + ", last modified = " + zipItem.LastModified);
+                Log.Info("Zip has changed. Extracting campaign " + campaignId + ", last modified = " + zipItem.LastModified);
                 ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified);
                 campaignContentMarkup = GetMarkup(campaignBaseDir);
                 campaignContentMarkup.LastModified = zipItem.LastModified;
-                //SiteConfiguration.CacheProvider.Store<CampaignContentMarkup>(campaignContentZip.Id, "CampaignContent", campaignContentMarkup);
                 cachedMarkup[cacheKey] = campaignContentMarkup;
             }
 
@@ -136,6 +149,17 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
             return SiteConfiguration.ContentProvider.GetStaticContentItem(campaignContentZip.Url, localization);
         }
 
+        protected StaticContentItem GetZipItem(string itemId, Localization localization)
+        {
+            BinaryMetaFactory binaryMetaFactory = new BinaryMetaFactory();
+            BinaryMeta binaryMeta = binaryMetaFactory.GetMeta("tcm:" + localization.Id + "-" + itemId);
+            if (binaryMeta != null)
+            {
+                return SiteConfiguration.ContentProvider.GetStaticContentItem(binaryMeta.UrlPath, localization);
+            }
+            return null;
+        }
+
         /// <summary>
         /// Get base directory for the specified campaign ID
         /// </summary>
@@ -164,6 +188,7 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
                     if (Directory.GetCreationTime(directory) > zipLastModified && Directory.GetFiles(directory).Length > 0)
                     {
                         Log.Info("Campaign assets in directory '" + directory + "' is already up to date. Skipping recreation of campaign assets.");
+                        return;
                     }
 
                     try

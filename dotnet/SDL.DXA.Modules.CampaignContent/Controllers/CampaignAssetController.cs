@@ -36,7 +36,16 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
             //
             var assetFileName = CampaignAssetProvider.Instance.GetAssetFileName(WebRequestContext.Localization, campaignId, assetUrl);
 
-            // Get last modified timestamp on the campaign (the campaign ZIP multi media item)
+            // If asset is not available -> trigger unpack the ZIP file & make the campaign markup available. 
+            // This is to support LB scenario when one node unpacks the ZIP file while other
+            // nodes receives the asset requests.
+            //
+            if (!System.IO.File.Exists(assetFileName))
+            {
+                CampaignAssetProvider.Instance.GetCampaignContentMarkup(campaignId, WebRequestContext.Localization);
+            }
+
+            // Get last modified timestamp on the campaign (the campaign ZIP multimedia item)
             //
             var lastModified = CampaignAssetProvider.Instance.GetLastModified(campaignId, WebRequestContext.Localization);
 
