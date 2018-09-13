@@ -66,6 +66,16 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
 
             var htmlDoc = NSoupClient.Parse("<body>" + campaignContentMarkup.MainHtml + "</body>");
 
+            // Remove all nodes that are marked as Preview Only
+            //
+            if (!WebRequestContext.IsPreview)
+            {
+                foreach (var element in htmlDoc.Body.Select("[data-preview-only=true]"))
+                {
+                    element.Remove();
+                }
+            }
+
             // Inject content into placeholders in the markup
             //
             if (campaignContentZip.TaggedContent != null)
