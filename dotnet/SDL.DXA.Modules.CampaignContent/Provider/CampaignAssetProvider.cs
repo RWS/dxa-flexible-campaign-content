@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Web;
+using System.Web.Configuration;
 using Tridion.ContentDelivery.Meta;
 
 namespace SDL.DXA.Modules.CampaignContent.Provider
@@ -24,7 +25,19 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
         private static Dictionary<string, CampaignContentMarkup> cachedMarkup = new Dictionary<string, CampaignContentMarkup>();
         private static readonly ConcurrentDictionary<string, object> FileLocks = new ConcurrentDictionary<string, object>();
 
-        private CampaignAssetProvider() {}
+        // Cache time to keep the ZIP file in staging sites.
+        // This to avoid to have the ZIP file unzipped for each request on a XPM enabled staging site.
+        // 
+        private int stagingCacheTime = 0;
+
+        private CampaignAssetProvider()
+        {
+            var cacheTime = WebConfigurationManager.AppSettings["instant-campaign-staging-cache-time"];
+            if (cacheTime != null)
+            {
+                stagingCacheTime = Int32.Parse(cacheTime);
+            }
+        }
 
         public static CampaignAssetProvider Instance
         {
@@ -66,6 +79,10 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
         public CampaignContentMarkup GetCampaignContentMarkup(string campaignId, Localization localization)
         {
             StaticContentItem zipItem = GetZipItem(campaignId, localization);
+            if (zipItem == null)
+            {
+                return null;
+            }
             return LoadCampaignContentMarkup(campaignId, zipItem, localization);
         }
 
@@ -95,7 +112,8 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
                 campaignContentMarkup.LastModified = zipItem.LastModified;
                 cachedMarkup[cacheKey] = campaignContentMarkup;
             }
-            else if (zipItem.LastModified > campaignContentMarkup.LastModified)
+            else if (!localization.IsXpmEnabled && zipItem.LastModified > campaignContentMarkup.LastModified ||
+                     localization.IsXpmEnabled && campaignContentMarkup.LastModified.AddSeconds(stagingCacheTime) < DateTime.Now) 
             {
                 Log.Info("Zip has changed. Extracting campaign " + campaignId + ", last modified = " + zipItem.LastModified);
                 ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified);
