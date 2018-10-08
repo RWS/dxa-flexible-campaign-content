@@ -16,5 +16,8 @@ namespace SDL.DXA.Modules.CampaignContent.Models
 
         [SemanticProperty("e:parameters")]
         public string Parameters { get; set; }
+
+        [SemanticProperty("e:altText")]
+        public string AltText { get; set; }
     }
 }

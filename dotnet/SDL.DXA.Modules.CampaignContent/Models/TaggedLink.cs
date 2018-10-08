@@ -13,5 +13,8 @@ namespace SDL.DXA.Modules.CampaignContent.Models
 
         [SemanticProperty("e:componentLink")]
         public string ComponentLink { get; set; }
+
+        [SemanticProperty("e:target")]
+        public string Target { get; set; }
     }
 }

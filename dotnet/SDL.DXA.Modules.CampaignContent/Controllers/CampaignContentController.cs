@@ -153,8 +153,11 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                     foreach (var element in htmlDoc.Body.Select("[data-link-name=" + taggedLink.Name + "]"))
                     {
                         var link = taggedLink.ComponentLink ?? taggedLink.Url;
-
                         element.Attr("href", link ?? "#");
+                        if (!string.IsNullOrEmpty(taggedLink.Target))
+                        {
+                            element.Attr("target", taggedLink.Target);
+                        }
                         if (WebRequestContext.IsPreview)
                         {
                             var fieldName = taggedLink.ComponentLink != null || string.IsNullOrWhiteSpace(taggedLink.Url) ? "componentLink" : "url";
@@ -200,6 +203,11 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                             imageUrl += "?" + taggedImage.Parameters;
                         }
                         element.Attr("src", imageUrl);
+
+                        if (!string.IsNullOrEmpty(taggedImage.AltText))
+                        {
+                            element.Attr("alt", taggedImage.AltText);
+                        }
 
                         if (WebRequestContext.IsPreview)
                         {
