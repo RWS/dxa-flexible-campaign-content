@@ -30,7 +30,7 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
         /// <param name="campaignId"></param>
         /// <param name="assetUrl"></param>
         /// <returns></returns>
-        public FileResult GetAsset(string campaignId, string assetUrl)
+        public ActionResult GetAsset(string campaignId, string assetUrl)
         {
             // Get file asset based on localization
             //
@@ -42,7 +42,18 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
             //
             if (!System.IO.File.Exists(assetFileName))
             {
-                CampaignAssetProvider.Instance.GetCampaignContentMarkup(campaignId, WebRequestContext.Localization);
+                var markup = CampaignAssetProvider.Instance.GetCampaignContentMarkup(campaignId, WebRequestContext.Localization);
+                if (markup == null)
+                {
+                    // Non existing campaign ID
+                    //
+                    return HttpNotFound("Campaign with ID: " + campaignId + " does not exist");
+                }
+            }
+
+            if (!System.IO.File.Exists(assetFileName))
+            {
+                return HttpNotFound("Campaign asset: " + assetUrl + " does not exist");
             }
 
             // Get last modified timestamp on the campaign (the campaign ZIP multimedia item)
