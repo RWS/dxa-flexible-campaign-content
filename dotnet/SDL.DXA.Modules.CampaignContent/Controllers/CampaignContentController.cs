@@ -115,6 +115,10 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                         if ( taggedProperty.Image != null )
                         {
                             propertyValue = propertyValue.Replace("%URL%", taggedProperty.Image.Url);
+                            if (element.TagName().Equals("img", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(taggedProperty.ImageAltText))
+                            {
+                                element.Attr("alt", taggedProperty.ImageAltText);
+                            }
 
                             if (element.Attr("data-property-sibling-replace") == "true")
                             {
@@ -123,6 +127,10 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                                     var siblingPropertyValue = sibling.Attr(taggedProperty.Target) ?? string.Empty;
                                     siblingPropertyValue = siblingPropertyValue.Replace("%URL%", taggedProperty.Image.Url);
                                     sibling.Attr(taggedProperty.Target, siblingPropertyValue);
+                                    if (!string.IsNullOrEmpty(taggedProperty.ImageAltText) && sibling.TagName().Equals("img", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        sibling.Attr("alt", taggedProperty.ImageAltText);
+                                    }
                                 }
                             }
                         }

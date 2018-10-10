@@ -14,6 +14,9 @@ namespace SDL.DXA.Modules.CampaignContent.Models
         [SemanticProperty("e:image")]
         public MediaItem Image { get; set; }
 
+        [SemanticProperty("e:imageAltText")]
+        public string ImageAltText { get; set; }
+
         [SemanticProperty("e:target")]
         public string Target { get; set; }
 
