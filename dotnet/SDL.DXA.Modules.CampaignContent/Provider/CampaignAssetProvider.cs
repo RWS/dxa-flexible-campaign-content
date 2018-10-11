@@ -1,4 +1,4 @@
-﻿using Sdl.Web.Common.Configuration;
+using Sdl.Web.Common.Configuration;
 using Sdl.Web.Common.Logging;
 using Sdl.Web.Common.Models;
 using SDL.DXA.Modules.CampaignContent.Models;
@@ -22,7 +22,7 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
 
         private static CampaignAssetProvider _instance = null;
 
-        private static Dictionary<string, CampaignContentMarkup> cachedMarkup = new Dictionary<string, CampaignContentMarkup>();
+        private static readonly ConcurrentDictionary<string, CampaignContentMarkup> CachedMarkup = new ConcurrentDictionary<string, CampaignContentMarkup>();
         private static readonly ConcurrentDictionary<string, object> FileLocks = new ConcurrentDictionary<string, object>();
 
         // Cache time to keep the ZIP file in staging sites.
@@ -96,7 +96,7 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
         {
             CampaignContentMarkup campaignContentMarkup;
             string cacheKey = GetMarkupCacheKey(campaignId, localization);
-            cachedMarkup.TryGetValue(cacheKey, out campaignContentMarkup);
+            CachedMarkup.TryGetValue(cacheKey, out campaignContentMarkup);
             string campaignBaseDir = GetBaseDir(localization, campaignId);
             if (campaignContentMarkup == null || !Directory.Exists(campaignBaseDir) || Directory.GetFiles(campaignBaseDir).Length == 0)
             {
@@ -104,13 +104,13 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
                 ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified);
                 campaignContentMarkup = GetMarkup(campaignBaseDir);
                 campaignContentMarkup.LastModified = zipItem.LastModified;
-                cachedMarkup[cacheKey] = campaignContentMarkup;
+                CachedMarkup[cacheKey] = campaignContentMarkup;
             }
             else if (campaignContentMarkup == null)
             {
                 campaignContentMarkup = GetMarkup(campaignBaseDir);
                 campaignContentMarkup.LastModified = zipItem.LastModified;
-                cachedMarkup[cacheKey] = campaignContentMarkup;
+                CachedMarkup[cacheKey] = campaignContentMarkup;
             }
             else if (!localization.IsXpmEnabled && zipItem.LastModified > campaignContentMarkup.LastModified ||
                      localization.IsXpmEnabled && campaignContentMarkup.LastModified.AddSeconds(stagingCacheTime) < DateTime.Now) 
@@ -119,7 +119,7 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
                 ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified);
                 campaignContentMarkup = GetMarkup(campaignBaseDir);
                 campaignContentMarkup.LastModified = zipItem.LastModified;
-                cachedMarkup[cacheKey] = campaignContentMarkup;
+                CachedMarkup[cacheKey] = campaignContentMarkup;
             }
 
             return campaignContentMarkup;
@@ -135,7 +135,7 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
         {
             string cacheKey = GetMarkupCacheKey(campaignId, localization);
             CampaignContentMarkup campaignContentMarkup;
-            cachedMarkup.TryGetValue(cacheKey, out campaignContentMarkup);
+            CachedMarkup.TryGetValue(cacheKey, out campaignContentMarkup);
             if ( campaignContentMarkup != null)
             {
                 return campaignContentMarkup.LastModified;
