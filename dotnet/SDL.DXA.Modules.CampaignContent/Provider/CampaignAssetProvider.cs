@@ -28,7 +28,7 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
         // Cache time to keep the ZIP file in staging sites.
         // This to avoid to have the ZIP file unzipped for each request on a XPM enabled staging site.
         // 
-        private int stagingCacheTime = 0;
+        private readonly int stagingCacheTime = 0;
 
         private CampaignAssetProvider()
         {
