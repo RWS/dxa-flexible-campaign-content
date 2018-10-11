@@ -1,10 +1,9 @@
-using Sdl.Web.Common.Configuration;
+﻿using Sdl.Web.Common.Configuration;
 using Sdl.Web.Common.Logging;
 using Sdl.Web.Common.Models;
 using SDL.DXA.Modules.CampaignContent.Models;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Web;
@@ -98,25 +97,27 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
             string cacheKey = GetMarkupCacheKey(campaignId, localization);
             CachedMarkup.TryGetValue(cacheKey, out campaignContentMarkup);
             string campaignBaseDir = GetBaseDir(localization, campaignId);
-            if (campaignContentMarkup == null || !Directory.Exists(campaignBaseDir) || Directory.GetFiles(campaignBaseDir).Length == 0)
+
+            if (campaignContentMarkup != null)
             {
-                Log.Info("Extracting campaign " + campaignId + ", last modified = " + zipItem.LastModified);
-                ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified);
-                campaignContentMarkup = GetMarkup(campaignBaseDir);
-                campaignContentMarkup.LastModified = zipItem.LastModified;
-                CachedMarkup[cacheKey] = campaignContentMarkup;
+                if (!localization.IsXpmEnabled && zipItem.LastModified > campaignContentMarkup.LastModified ||
+                    localization.IsXpmEnabled && campaignContentMarkup.LastModified.AddSeconds(stagingCacheTime) < DateTime.Now)
+                {
+                    Log.Info("Zip has changed. Extracting campaign " + campaignId + ", last modified = " + zipItem.LastModified);
+                    ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified);
+                    campaignContentMarkup = GetMarkup(campaignBaseDir);
+                    campaignContentMarkup.LastModified = zipItem.LastModified;
+                    CachedMarkup[cacheKey] = campaignContentMarkup;
+                }
             }
-            else if (campaignContentMarkup == null)
+            else
             {
-                campaignContentMarkup = GetMarkup(campaignBaseDir);
-                campaignContentMarkup.LastModified = zipItem.LastModified;
-                CachedMarkup[cacheKey] = campaignContentMarkup;
-            }
-            else if (!localization.IsXpmEnabled && zipItem.LastModified > campaignContentMarkup.LastModified ||
-                     localization.IsXpmEnabled && campaignContentMarkup.LastModified.AddSeconds(stagingCacheTime) < DateTime.Now) 
-            {
-                Log.Info("Zip has changed. Extracting campaign " + campaignId + ", last modified = " + zipItem.LastModified);
-                ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified);
+                if (!Directory.Exists(campaignBaseDir) || Directory.GetFiles(campaignBaseDir).Length == 0)
+                {
+                    Log.Info("Extracting campaign " + campaignId + ", last modified = " + zipItem.LastModified);
+                    ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified);
+                }
+
                 campaignContentMarkup = GetMarkup(campaignBaseDir);
                 campaignContentMarkup.LastModified = zipItem.LastModified;
                 CachedMarkup[cacheKey] = campaignContentMarkup;
