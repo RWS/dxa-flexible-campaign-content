@@ -1,10 +1,9 @@
-using Sdl.Web.Common.Configuration;
+﻿using Sdl.Web.Common.Configuration;
 using Sdl.Web.Common.Logging;
 using Sdl.Web.Common.Models;
 using SDL.DXA.Modules.CampaignContent.Models;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Web;
@@ -98,6 +97,7 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
             string cacheKey = GetMarkupCacheKey(campaignId, localization);
             CachedMarkup.TryGetValue(cacheKey, out campaignContentMarkup);
             string campaignBaseDir = GetBaseDir(localization, campaignId);
+
             if (campaignContentMarkup == null || !Directory.Exists(campaignBaseDir) || Directory.GetFiles(campaignBaseDir).Length == 0)
             {
                 Log.Info("Extracting campaign " + campaignId + ", last modified = " + zipItem.LastModified);
@@ -106,7 +106,8 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
                 campaignContentMarkup.LastModified = zipItem.LastModified;
                 CachedMarkup[cacheKey] = campaignContentMarkup;
             }
-            else if (campaignContentMarkup == null)
+
+            if (campaignContentMarkup == null)
             {
                 campaignContentMarkup = GetMarkup(campaignBaseDir);
                 campaignContentMarkup.LastModified = zipItem.LastModified;
