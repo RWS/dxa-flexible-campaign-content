@@ -16,11 +16,32 @@ public class TaggedImage extends AbstractEntityModel {
     @SemanticProperty("e:image")
     private MediaItem image;
 
+    @SemanticProperty("e:imageUrl")
+    private String imageUrl;
+
+    @SemanticProperty("e:parameters")
+    private String parameters;
+
+    @SemanticProperty("e:altText")
+    private String altText;
+
     public String getName() {
         return name;
     }
 
     public MediaItem getImage() {
         return image;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public String getParameters() {
+        return parameters;
+    }
+
+    public String getAltText() {
+        return altText;
     }
 }

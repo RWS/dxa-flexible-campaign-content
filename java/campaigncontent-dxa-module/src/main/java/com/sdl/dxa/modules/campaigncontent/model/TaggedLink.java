@@ -18,6 +18,9 @@ public class TaggedLink extends AbstractEntityModel {
     @SemanticProperty("e:componentLink")
     private String componentLink;
 
+    @SemanticProperty("e:target")
+    private String target;
+
     public String getName() {
         return name;
     }
@@ -28,5 +31,9 @@ public class TaggedLink extends AbstractEntityModel {
 
     public String getComponentLink() {
         return componentLink;
+    }
+
+    public String getTarget() {
+        return target;
     }
 }

@@ -38,9 +38,7 @@ import java.io.File;
 @RequestMapping("/system/mvc/CampaignContent/CampaignContent")
 public class CampaignContentController extends BaseController {
 
-
     private static final Logger LOG = LoggerFactory.getLogger(CampaignContentController.class);
-
 
     @Autowired
     private WebRequestContext webRequestContext;
@@ -52,8 +50,11 @@ public class CampaignContentController extends BaseController {
     private CampaignAssetProvider campaignAssetProvider;
 
     @Value("${instantcampaign.asset.baseUrl:/assets/campaign}")
-    // TODO: Right now this has to be hard coded until DXA supports Spring 3.2+
+    // TODO: Right now this has to be hard coded until DXA supports Spring 4.0+
     private String assetBaseUrl;
+
+    @Value("${instantcampaign.localImages.useParameters:false}")
+    private Boolean useParametersForLocalImages;
 
     /**
      * Assembly content
@@ -69,7 +70,7 @@ public class CampaignContentController extends BaseController {
         this.getProcessedMarkup(entity);
         final MvcData mvcData = entity.getMvcData();
         request.setAttribute("entity", entity);
-        return resolveView(mvcData, "Entity", request);
+        return this.viewNameResolver.resolveView(mvcData, "Entity");
     }
 
     /**
@@ -116,11 +117,14 @@ public class CampaignContentController extends BaseController {
             int index = 1;
             for (val taggedContent : campaignContentZip.getTaggedContent()) {
                 for (val element : htmlDoc.body().select("[data-content-name=" + taggedContent.getName() + "]")) {
-                    String contentMarkup =
-                            "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedContent[" +
-                            index +
-                            "]/custom:content[1]\"} -->" +
-                            taggedContent.getContent().toString();
+                    String contentMarkup = taggedContent.getContent() != null ? taggedContent.getContent().toString() : "";
+                    if ( webRequestContext.isPreview() ) {
+                        contentMarkup =
+                                "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedContent[" +
+                                index +
+                                "]/custom:content[1]\"} -->" +
+                                contentMarkup;
+                    }
                     element.html(contentMarkup);
                 }
                 index++;
@@ -130,29 +134,71 @@ public class CampaignContentController extends BaseController {
         // Inject tagged properties
         //
         if ( campaignContentZip.getTaggedProperties() != null ) {
+            int index = 1;
             for (val taggedProperty : campaignContentZip.getTaggedProperties() ) {
-                Integer index = taggedProperty.getIndex();
+                Integer propertyIndex = taggedProperty.getIndex();
                 String indexSuffix = "";
-                if ( index != null && index > 1 ) {
-                    indexSuffix = "-" + index;
+                if ( propertyIndex != null && propertyIndex > 1 ) {
+                    indexSuffix = "-" + propertyIndex;
                 }
-                for (val element : htmlDoc.body().select("[data-property-name" + indexSuffix  + "=" + taggedProperty.getName() + "]")) {
-                    element.attr(taggedProperty.getTarget(), taggedProperty.getValue());
+                for (val element : htmlDoc.body().select("[data-property-name" + indexSuffix + "=" + taggedProperty.getName() + "]")) {
+
+                    String propertyValue = taggedProperty.getValue();
+                    boolean containsUrlPlaceholder = propertyValue.contains("%URL%");
+                    if ( taggedProperty.getImage() != null ) {
+                        propertyValue = propertyValue.replace("%URL%", taggedProperty.getImage().getUrl());
+                        if ( element.tagName().equalsIgnoreCase("img") && StringUtils.isNotEmpty(taggedProperty.getImageAltText())) {
+                            element.attr("alt", taggedProperty.getImageAltText());
+                        }
+                        if ("true".equals(element.attr("data-property-sibling-replace"))) {
+                            for (val sibling : element.siblingElements()) {
+                                String siblingPropertyValue = sibling.attr(taggedProperty.getTarget() != null ? taggedProperty.getTarget() : "");
+                                siblingPropertyValue = siblingPropertyValue.replace("%URL%", taggedProperty.getImage().getUrl());
+                                sibling.attr(taggedProperty.getTarget(), siblingPropertyValue);
+                                if ( StringUtils.isNotEmpty(taggedProperty.getImageAltText()) && sibling.tagName().equalsIgnoreCase("img")) {
+                                    sibling.attr("alt", taggedProperty.getImageAltText());
+                                }
+                            }
+                        }
+                    }
+
+                    element.attr(taggedProperty.getTarget(), propertyValue != null ? propertyValue : "");
+
+                    // Generate image XPM markup if tagged property can contain/contains an image URL
+                    //
+                    if ( webRequestContext.isPreview() && containsUrlPlaceholder) {
+                        String xpmMarkup =
+                                "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedProperties[" +
+                                        index +
+                                        "]/custom:image[1]\"} -->";
+                        element.prepend(xpmMarkup);
+                    }
                 }
+                index++;
             }
         }
 
         // Inject tagged links
         //
         if ( campaignContentZip.getTaggedLinks() != null ) {
+            int index = 1;
             for (val taggedLink : campaignContentZip.getTaggedLinks() ) {
                 for (val element : htmlDoc.body().select("[data-link-name" + "=" + taggedLink.getName() + "]")) {
                     String href = taggedLink.getComponentLink();
                     if ( href == null ) {
                         href = taggedLink.getUrl();
                     }
-                    element.attr("href", href);
+                    element.attr("href", href != null ? href : "#");
+                    if ( webRequestContext.isPreview() ) {
+                        String fieldName = taggedLink.getComponentLink() != null || StringUtils.isEmpty(taggedLink.getUrl()) ? "componentLink" : "url";
+                        String xpmMarkup =
+                                "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedLinks[" +
+                                        index +
+                                        "]/custom:" + fieldName + "[1]\"} -->";
+                        element.prepend(xpmMarkup);
+                    }
                 }
+                index++;
             }
         }
 
@@ -167,13 +213,39 @@ public class CampaignContentController extends BaseController {
             int index = 1;
             for (val taggedImage : campaignContentZip.getTaggedImages()) {
                 for (val element : htmlDoc.body().select("[data-image-name=" + taggedImage.getName() + "]")) {
-                    String xpmMarkup =
-                            "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedImages[" +
-                            index +
-                            "]/custom:image[1]\"} -->";
 
-                    element.attr("src", taggedImage.getImage().getUrl()); // Right now always assume the data tag is only used in img tags
-                    element.before(xpmMarkup);
+
+                    String imageUrl = "";
+                    if ( taggedImage.getImage() != null ) {
+                        imageUrl = taggedImage.getImage().getUrl();
+                    }
+                    else if ( taggedImage.getImageUrl() != null ) {
+                        imageUrl = taggedImage.getImageUrl();
+                    }
+                    if (taggedImage.getParameters() != null &&
+                            (taggedImage.getImage() == null || (taggedImage.getImage() != null && Boolean.TRUE.equals(useParametersForLocalImages)))) {
+                        imageUrl += "?" + taggedImage.getParameters();
+                    }
+                    element.attr("src", imageUrl); // Right now always assume the data tag is only used in img tags
+                    if (StringUtils.isNotEmpty(taggedImage.getAltText())) {
+                        element.attr("alt", taggedImage.getAltText());
+                    }
+                    if (webRequestContext.isPreview()) {
+                        String xpmMarkup =
+                                "<!-- Start Component Field: {\"XPath\":\"tcm:Metadata/custom:Metadata/custom:taggedImages[" +
+                                        index +
+                                        "]/custom:image[1]\"} -->";
+                        if (taggedImage.getImage() != null) {
+                            element.before(xpmMarkup);
+                        }
+                        else {
+                            // Surround the XPM markup in an additional span. This to avoid that the
+                            // image with absolute URL will not disappear as soon you click on it.
+                            //
+                            element.before("<span>" + xpmMarkup + "</span>");
+                        }
+                    }
+
                 }
                 index++;
             }

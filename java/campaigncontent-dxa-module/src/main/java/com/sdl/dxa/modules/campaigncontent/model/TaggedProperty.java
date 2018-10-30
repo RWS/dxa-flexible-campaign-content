@@ -3,6 +3,7 @@ package com.sdl.dxa.modules.campaigncontent.model;
 import com.sdl.webapp.common.api.mapping.semantic.annotations.SemanticEntity;
 import com.sdl.webapp.common.api.mapping.semantic.annotations.SemanticProperty;
 import com.sdl.webapp.common.api.model.entity.AbstractEntityModel;
+import com.sdl.webapp.common.api.model.entity.MediaItem;
 
 import static com.sdl.webapp.common.api.mapping.semantic.config.SemanticVocabulary.SDL_CORE;
 
@@ -21,6 +22,12 @@ public class TaggedProperty extends AbstractEntityModel {
     @SemanticProperty("e:index")
     private Integer index;
 
+    @SemanticProperty("e:image")
+    private MediaItem image;
+
+    @SemanticProperty("e:imageAltText")
+    private String imageAltText;
+
     public String getName() {
         return name;
     }
@@ -35,5 +42,13 @@ public class TaggedProperty extends AbstractEntityModel {
 
     public Integer getIndex() {
         return index;
+    }
+
+    public MediaItem getImage() {
+        return image;
+    }
+
+    public String getImageAltText() {
+        return imageAltText;
     }
 }

@@ -5,8 +5,10 @@ import com.sdl.dxa.modules.campaigncontent.provider.CampaignAssetProvider;
 import com.sdl.webapp.common.api.WebRequestContext;
 import com.sdl.webapp.common.api.content.ContentProviderException;
 import com.sdl.webapp.common.api.localization.Localization;
+import com.sdl.webapp.common.controller.exception.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -23,16 +25,20 @@ import static com.google.common.net.HttpHeaders.*;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_MODIFIED;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 
+/**
+ * Campaign Asset Controller.
+ * Delivers campaigns assets from the campaign ZIP.
+ * When setting up the system, avoid use '/assets/' as media path on the different publications.
+ * @author nic
+ */
 @Controller
-//TODO: When on Spring3.2+ use variables in the request mapping
+//TODO: When on Spring4+ use variables in the request mapping
 //@RequestMapping("${instantcampaign.asset.baseUrl:/assets/campaign}")
 @RequestMapping("/assets/campaign")
 @Slf4j
 public class CampaignAssetController {
 
     private static final String CACHE_CONTROL_PREFIX = "public, max-age=";
-
-    // TODO: Need to handle localization URLs here as well!!!!!!!
 
     @Autowired
     private WebRequestContext webRequestContext;
@@ -56,18 +62,20 @@ public class CampaignAssetController {
     @RequestMapping(method = RequestMethod.GET, value = "/**")
     public void getAsset(HttpServletRequest request, HttpServletResponse response) throws ContentProviderException, IOException {
 
-        // TODO: Find a better solution for this!!!!
         String url = request.getRequestURI().replace("/assets/campaign", "");
         int index = url.indexOf("/", 1);
         String campaignId = url.substring(1, index);
         String assetUrl = url.substring(index);
-
         Localization localization = webRequestContext.getLocalization();
         String mimeType = servletContext.getMimeType(assetUrl);
         response.setContentType(mimeType);
+
         long lastModified = this.campaignAssetProvider.getLastModified(campaignId, localization);
         if ( isToBeRefreshed(request, response, lastModified) ) {
             InputStream inputStream = this.campaignAssetProvider.getAsset(localization, campaignId, assetUrl);
+            if (inputStream == null) {
+                throw new NotFoundException("Campaign asset '" + assetUrl + "' was not for campaign ID: " + campaignId);
+            }
             IOUtils.copy(inputStream, response.getOutputStream());
             response.flushBuffer();
         }

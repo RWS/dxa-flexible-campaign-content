@@ -5,9 +5,12 @@ import com.sdl.webapp.common.api.content.ContentProvider;
 import com.sdl.webapp.common.api.content.ContentProviderException;
 import com.sdl.webapp.common.api.content.StaticContentItem;
 import com.sdl.webapp.common.api.localization.Localization;
+import com.tridion.meta.BinaryMeta;
+import com.tridion.meta.BinaryMetaFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -32,6 +35,12 @@ public class CampaignAssetProvider {
 
     private Map<String, CampaignContentMarkup> cachedMarkup = new HashMap<>();
 
+    // Cache time to keep the ZIP file in staging sites.
+    // This to avoid to have the ZIP file unzipped for each request on a XPM enabled staging site.
+    //
+    @Value("${instantcampaign.staging.cacheTime:0}")
+    private int stagingCacheTime;
+
     static final String STATIC_FILES_DIR = "BinaryData";
 
     /**
@@ -39,15 +48,38 @@ public class CampaignAssetProvider {
      * @param localization
      * @param campaignId
      * @param assetUrl
-     * @return asset input stream
+     * @return asset input stream. If not found -> NULL is returned.
      * @throws ContentProviderException
      */
     public InputStream getAsset(Localization localization, String campaignId, String assetUrl) throws ContentProviderException {
 
         try {
             log.debug("Getting campaign asset: " + assetUrl + " for campaign ID: " + campaignId);
-            InputStream inputStream = new FileInputStream(new File(getBaseDir(localization, campaignId) + assetUrl));
-            return inputStream;
+            File assetFile = new File(getBaseDir(localization, campaignId) + assetUrl);
+            if (!assetFile.exists()) {
+
+                // If asset is not available -> trigger unpack the ZIP file & make the campaign markup available.
+                // This is to support LB scenario when one node unpacks the ZIP file while other
+                // nodes receives the asset requests.
+                //
+                StaticContentItem zipItem = getZipItem(campaignId, localization);
+                if (zipItem == null) {
+
+                    // Campaign asset was not found
+                    //
+                    return null;
+                }
+                else {
+                    // Trigger unpack of the ZIP file
+                    //
+                    getCampaignContentMarkup(campaignId, zipItem, localization);
+                }
+                if (!assetFile.exists()) {
+                    log.warn("Campaign asset '" + assetUrl + "' was not found for campaign ID: " + campaignId);
+                    return null;
+                }
+            }
+            return new FileInputStream(new File(getBaseDir(localization, campaignId) + assetUrl));
         }
         catch ( IOException e ) {
             throw new ContentProviderException("Could not get asset: " + assetUrl + " for campaign: " + campaignId + " and localication ID: " + localization.getId(), e);
@@ -64,12 +96,19 @@ public class CampaignAssetProvider {
      */
     public CampaignContentMarkup getCampaignContentMarkup(CampaignContentZIP campaignContentZip, Localization localization) throws ContentProviderException {
         StaticContentItem zipItem = this.getZipItem(campaignContentZip, localization);
+        return this.getCampaignContentMarkup(campaignContentZip.getId(), zipItem, localization);
+    }
 
-        String cacheKey = getMarkupCacheKey(campaignContentZip.getId(), localization);
+    public CampaignContentMarkup getCampaignContentMarkup(String campaignId, StaticContentItem zipItem, Localization localization) throws ContentProviderException {
+        String cacheKey = getMarkupCacheKey(campaignId, localization);
         CampaignContentMarkup markup = this.cachedMarkup.get(cacheKey);
-        File baseDir = this.getBaseDir(localization, campaignContentZip.getId());
+        File baseDir = this.getBaseDir(localization, campaignId);
 
-        if( markup == null || !baseDir.exists() || !this.directoryHasFiles(baseDir) ) {
+        if( markup == null ||
+                !baseDir.exists() ||
+                !this.directoryHasFiles(baseDir) ||
+                !localization.isStaging() && zipItem.getLastModified() > markup.getLastModified() ||
+                localization.isStaging() && markup.getLastModified()+(stagingCacheTime*1000) < System.currentTimeMillis()) {
             try {
                 markup = extractZip(zipItem, baseDir);
                 markup.setLastModified(zipItem.getLastModified());
@@ -125,6 +164,15 @@ public class CampaignAssetProvider {
         return contentProvider.getStaticContent(campaignContentZip.getUrl(), localization.getId(), localization.getPath());
     }
 
+    protected StaticContentItem getZipItem(String itemId, Localization localization) throws ContentProviderException {
+        BinaryMetaFactory binaryMetaFactory = new BinaryMetaFactory();
+        BinaryMeta binaryMeta = binaryMetaFactory.getMeta("tcm:" + localization.getId() + "-" + itemId);
+        if (binaryMeta != null) {
+            return contentProvider.getStaticContent(binaryMeta.getURLPath(), localization.getId(), localization.getPath());
+        }
+        return null;
+    }
+
     /**
      * Extract ZIP
      * @param zipItem
@@ -134,6 +182,7 @@ public class CampaignAssetProvider {
      */
     protected CampaignContentMarkup extractZip(StaticContentItem zipItem, File directory) throws IOException {
 
+        log.debug("Extracting campaign ZIP in directory: " + directory);
         ByteArrayOutputStream htmlMarkup = new ByteArrayOutputStream();
         ByteArrayOutputStream headerMarkup = new ByteArrayOutputStream();
         ByteArrayOutputStream footerMarkup = new ByteArrayOutputStream();

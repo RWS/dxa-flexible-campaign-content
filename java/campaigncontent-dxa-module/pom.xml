@@ -6,32 +6,23 @@
 
     <groupId>com.sdl.dxa.modules.campaigncontent</groupId>
     <artifactId>campaigncontent-dxa-module</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
 
     <properties>
       <java-version>1.8</java-version>
-      <dxa.version>1.7.0</dxa.version>
-      <dxa-release-branch>release/1.7</dxa-release-branch>
+      <dxa.version>2.0.0</dxa.version>
+      <dxa-release-branch>release/2.0</dxa-release-branch>
     </properties>
 
     <dependencyManagement>
      <dependencies>
-         <dependency>
-             <groupId>com.sdl.dxa</groupId>
-             <artifactId>dxa-bom</artifactId>
-             <version>${dxa.version}</version>
-             <scope>import</scope>
-             <type>pom</type>
-         </dependency>
-
-         <dependency>
-             <groupId>com.sdl.dxa.modules</groupId>
-             <artifactId>dxa-bom-modules</artifactId>
-             <version>${dxa.version}</version>
-             <scope>import</scope>
-             <type>pom</type>
-         </dependency>
-
+            <dependency>
+                <groupId>com.sdl.dxa</groupId>
+                <artifactId>dxa-oss-parent</artifactId>
+                <version>${dxa.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
      </dependencies>
  </dependencyManagement>
 
@@ -41,11 +32,6 @@
         <dependency>
             <groupId>com.sdl.dxa</groupId>
             <artifactId>dxa-common-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.sdl.dxa</groupId>
-            <artifactId>dxa-common-impl</artifactId>
         </dependency>
 
         <dependency>
