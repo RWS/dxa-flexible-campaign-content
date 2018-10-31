@@ -230,7 +230,7 @@ namespace SDL.DXA.Modules.CampaignContent.Controllers
                             }
                             else
                             {
-                                // Sorround the XPM markup in an additional span. This to avoid that the
+                                // Surround the XPM markup in an additional span. This to avoid that the
                                 // image with absolute URL will not disappear as soon you click on it.
                                 //
                                 element.Before("<span>" + xpmMarkup + "</span>");
