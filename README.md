@@ -1,13 +1,23 @@
-SDL Web Instant Campaign (aka DXA Flexible Campaign Content)
-=============================================================
+SDL Tridion Sites Instant Campaign (aka DXA Flexible Campaign Content)
+======================================================================
 
 Introduction
 --------------
 
-The SDL Web Instant Campaign extension (also known as DXA Flexible Campaign Content) make it possible for digital agencies to create HTML based campaigns
-in their own tool suites. When ready they can package all campaign assets (HTML, CSS,JS, images etc) into a ZIP and upload it into SDL Web.
+The SDL Tridion Sites Instant Campaign extension (also known as DXA Flexible Campaign Content) make it possible for digital agencies to create HTML based campaigns
+in their own tool suites. When ready they can package all campaign assets (HTML, CSS,JS, images etc) into a ZIP and upload it into SDL Tridion Sites.
 The benefit of this extension is that digital agencies are given the freedom (within some defined boundaries of the brand guidelines, used CSS framework etc)
-to build campaign content with unique layout and interaction elements. And that without the need of creating specific templates in SDL Web for the created campaign.
+to build campaign content with unique layout and interaction elements. And that without the need of creating specific templates in SDL Tridion Sites for the created campaign.
+
+New functionality in v1.2:
+* Support for DXA 2.0
+* Support for tagging of links
+* Support for extraction of external image URLs
+* Support for image properties
+* Support for image alternate texts
+* Support for url variables (%URL%) in tagged properties
+
+A complete distribution is found on SDL AppStore:  https://appstore.sdl.com/web-content-management/app/instant-campaign/748/
 
 Functionality
 ---------------
@@ -36,7 +46,14 @@ Functionality
         <img data-image-name="img/default-hero-image.png"></img>
     </div>
   ```
-* The marked images are uploaded automatically into SDL Web and can be replaced by an editor. This applies to all non-absolute image URLs. For absolute URLs the image URL is stored in the CMS plus eventual URL parameters. The image with absolute URL can then be replaced by the editor with a CMS/ECL image.
+* The marked images are uploaded automatically into SDL Tridion Sites and can be replaced by an editor. This applies to all non-absolute image URLs. For absolute URLs the image URL is stored in the CMS plus eventual URL parameters. The image with absolute URL can then be replaced by the editor with a CMS/ECL image.
+* Links can also be tagged so they can modified in SDL Tridion Sites either by using a static URL or a dynamic component link. SDL Tridion Sites will extract all links using the data property 'data-link-name'. Example:
+
+  ```
+   <div>
+      <a href="https://en.wikipedia.org/wiki/Monument_Valley" data-link-name="monument-valley-link"><span data-content-name="monument-valley-link-text">Read more</span></a>
+   </div>
+  ```
 * To build reusable campaigns the markup can be parameterized by using tagged properties. This done by the HTML attributes 'data-property-name' and 'data-property-target'. Currently the properties can operate on any HTML element attribute. Example:
 
   ```
@@ -57,33 +74,35 @@ Functionality
       <img data-image-name="img/default-hero-image.png"></img>
   </div>
 ```
-* The image URLs used in property values can also be selected from Tridion. Then you need to use the inline property `%URL%` when you configure the value in Tridion. For example: `background-image: url(%URL%);`  
-* The campaign component in SDL Web can sent for translation using the SDL Web translation connectors for WorldServer, TMS or BeGlobal.
+* The image URLs used in property values can also be selected from Tridion. Then you need to use the inline property `%URL%` when you configure the value in Tridion. For example: `background-image: url(%URL%);`. It is also possible to select an CMS image to be used as value for the '%URL%'-parameter.  
+* The data attribute 'data-preview-only=true' can be used for markup that should only be shown on staging sites
+* The campaign component in SDL Tridion Sites can sent for translation using the translation connectors for WorldServer, TMS or BeGlobal.
 * A DXA module for both DXA.Java and DXA.NET is available to be to render the uploaded campaigns.
 * The DXA module will extract all campaign assets and make them available. All assets links will be rewritten in the campaign markup to unique URLs for the published campaign.
 * All editable content will be merged into the campaign markup.
 * If DXA runs in a staging mode additional XPM markup will be generated around the editable content to make it inline editable.
 
-The extension has been verified both on SDL Web 8.1.1 and SDL Web 8.5 using DXA 1.7.
+The extension has been verified both on SDL Web 8.1.1 and SDL Web 8.5 using DXA 2.0.
+Support for SDL Tridion Sites 9.0 and DXA 2.1 will soon be available.
 
 Installation
 --------------
 
-Follow the below steps to install this extension in SDL Web CMS and DXA.
+Follow the below steps to install this extension in SDL Tridion Sites CMS and DXA.
 
 CMS:
 
 1. Either compile the C# code in the 'cms/campaign-upload-extension' directory or download the pre-compiled DDL for SDL Web 8.5 here:
-    - For SDL Web 8.5: [campaign-upload-extension-v1.1.0.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.1.0.dll)
+    - For SDL Web 8.5: [campaign-upload-extension-v1.2.0.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.2.0.dll)
     - For SDL Web 8.1.1:
-    [campaign-upload-extension-v1.1.0-8.1.1.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.1.0-8.1.1.dll)
+    [campaign-upload-extension-v1.2.0-8.1.1.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.2.0-8.1.1.dll)
 2. If you compile the extension yourself you need to merge the DLLs into one single DLL by using [ILMerge](https://www.microsoft.com/en-us/download/details.aspx?id=17630). Use the merge_dll.bat to generate a merged DLL.
 
-3. Upload the DLL to your SDL Web server and place it somewhere local on the server. Do not forget to unblock the DLL to avoid assembly loading issues.
+3. Upload the DLL to your SDL Tridion Sites server and place it somewhere local on the server. Do not forget to unblock the DLL to avoid assembly loading issues.
    Then add the following in your %SDLWEB_HOME%\config\Tridion.ContentManager.config in <extensions> tag:
 
    ```
-   <add assemblyFileName="[PATH TO DLL]\campaign-upload-extension-v1.1.0.dll"/>
+   <add assemblyFileName="[PATH TO DLL]\campaign-upload-extension-v1.2.0.dll"/>
    ```
 
 4. After that restart the services 'SDL Web Content Manager Service Host' and 'SDL Web Transport Distributor Service'
@@ -92,7 +111,7 @@ CMS:
 
 DXA.NET:
 
-1. If you do not have a DXA.NET setup (for SDL Web 8/8.5) you can easily do this by following the instructions given here: [Installing the web application (.NET)](http://docs.sdl.com/LiveContent/web/pub.xql?action=home&pub=SDL%20DXA-v7&lang=en-US)
+1. If you do not have a DXA.NET setup (for SDL Web 8/8.5) you can easily do this by following the instructions given here: [Installing the web application (.NET)](https://docs.sdl.com/LiveContent/content/en-US/SDL%20DXA-v10/GUID-001D829E-1141-4B18-B696-894DF27B6DA1)
 2. Either open up the solution 'dotnet/SDL.DXA.Modules.CampaignContent.sln' or add the VS project under the directory 'dotnet' to your Visual Studio solution
 4. Set the environment variable %DXA_SITE_DIR% to point to your DXA Site path (in visual studio or in your IIS instance)
 5. Restart Visual studio and rebuild the solution. Verify so the CampaignContent Area and DLLs are copied to your site folder
@@ -115,7 +134,7 @@ DXA.Java:
         <dependency>
             <groupId>com.sdl.dxa.modules.campaigncontent</groupId>
             <artifactId>campaigncontent-dxa-module</artifactId>
-            <version>1.1.0</version>
+            <version>1.2.0</version>
         </dependency>
 
     </dependencies>
@@ -173,7 +192,7 @@ You can also use properties in your HTML markup that can be managed by CMS. The 
   </div>
 ```
 
-When uploading the campaign into SDL Web all marked textual content, images and property variables are extracted into a list of embedded schema fields.
+When uploading the campaign into SDL Tridion Sites all marked textual content, images and property variables are extracted into a list of embedded schema fields.
 All non-absolute references to assets will be rewritten to unique campaign URLs on the DXA side.
 The digital agency/internal web team should share the base HTML, CSS, JS which form the brand look & feel. Which is also used when develop and test
 the campaign HTML. All CSS/JS not part of the base look&feel needs to be included in the campaign ZIP.
@@ -190,7 +209,7 @@ index.html:
       </div>
       <div data-content-name="body-text">
         <h3>some rich content comes here</h3>
-        <p>And some more text comes here. All this text can be modified in SDL Web.</p>
+        <p>And some more text comes here. All this text can be modified in SDL Tridion Sites.</p>
       </div>   
    </div>
 ```
@@ -266,7 +285,7 @@ We intend to follow Gitflow (http://nvie.com/posts/a-successful-git-branching-mo
 
 License
 ---------
-Copyright (c) 2017 SDL Group.
+Copyright (c) 2018 SDL Group.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
