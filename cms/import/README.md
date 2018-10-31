@@ -15,7 +15,7 @@ Before running the import script the needed DLLs needs to be copied. See [Import
 Import the CMS package by doing the following
 
 ```
-.\cms-import.ps1  -cmsUrl [CMS url] -moduleZip CampaignContent-Module-v1.1.0.zip
+.\cms-import.ps1  -cmsUrl [CMS url] -moduleZip CampaignContent-Module-v1.2.0.zip
 ```
 
-If you already have Instant Campaign v1.0 installed, you should be able to run this script to update your setup (if you have not changed any of the schemas and templates under '/Building Blocks/Modules/CampaignContent').
+If you already have Instant Campaign v1.0/v1.1 installed, you should be able to run this script to update your setup (if you have not changed any of the schemas and templates under '/Building Blocks/Modules/CampaignContent').
