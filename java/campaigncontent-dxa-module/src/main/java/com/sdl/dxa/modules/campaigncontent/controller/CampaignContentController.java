@@ -110,6 +110,16 @@ public class CampaignContentController extends BaseController {
     protected String processMarkup(CampaignContentZIP campaignContentZip, CampaignContentMarkup markup, String assetBaseDir) {
         Document htmlDoc = Jsoup.parse("<body>" + markup.getMainHtml() + "</body>");
 
+        // Remove all nodes that are marked as Preview Only
+        //
+        if (true || !webRequestContext.isPreview())
+        {
+            for (val element : htmlDoc.body().select("[data-preview-only=true]"))
+            {
+                element.remove();
+            }
+        }
+
         // Inject content into placeholders in the markup
         //
         if ( campaignContentZip.getTaggedContent() != null ) {
