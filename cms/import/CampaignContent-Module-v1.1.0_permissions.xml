@@ -1,8 +1,0 @@
-<export>
-    <organizationalItem path="/webdav/100%20Master/Building%20Blocks/Modules/CampaignContent/Editor">
-        <permissions group="Everyone">Read</permissions>
-        <permissions group="Developer">All</permissions>
-        <permissions group="Editor">All</permissions>
-        <permissions group="Site Manager">All</permissions>
-    </organizationalItem>
-</export>
