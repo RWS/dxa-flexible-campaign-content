@@ -6,6 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.IO.Compression;
+using System.Threading;
 using System.Web;
 using System.Web.Configuration;
 using Tridion.ContentDelivery.Meta;
@@ -252,25 +253,25 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
             // Main HTML
             //
             string mainHtmlFile = directory + "/index.html";
-            if (System.IO.File.Exists(mainHtmlFile))
+            if (File.Exists(mainHtmlFile))
             {
-                markup.MainHtml = System.IO.File.ReadAllText(mainHtmlFile);
+                markup.MainHtml = ReadAllTextWithRetry(mainHtmlFile);
             }
 
             // Header HTML
             //
             string headerHtmlFile = directory + "/header.html";
-            if (System.IO.File.Exists(headerHtmlFile))
+            if (File.Exists(headerHtmlFile))
             {
-                markup.HeaderHtml = System.IO.File.ReadAllText(headerHtmlFile);
+                markup.HeaderHtml = ReadAllTextWithRetry(headerHtmlFile);
             }
 
             // Footer HTML
             //
             string footerHtmlFile = directory + "/footer.html";
-            if (System.IO.File.Exists(footerHtmlFile))
+            if (File.Exists(footerHtmlFile))
             {
-                markup.FooterHtml = System.IO.File.ReadAllText(footerHtmlFile);
+                markup.FooterHtml = ReadAllTextWithRetry(footerHtmlFile);
             }
             return markup;
         }
@@ -280,7 +281,7 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
         /// </summary>
         /// <param name="name">Name of the lock</param>
         /// <returns>The lock object</returns>
-        protected static Object GetLock(string name)
+        protected static object GetLock(string name)
         {
             return FileLocks.GetOrAdd(name, s => new object());
         }
@@ -288,6 +289,27 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
         private static string GetLocalStaticsFolder(string localizationId)
         {
             return string.Format("{0}\\{1}", StaticsFolder, localizationId);
+        }
+
+        private static string ReadAllTextWithRetry(string path, int triesLeft = 3, TimeSpan? delay = null)
+        {
+            delay = delay ?? TimeSpan.FromMilliseconds(10);
+
+            try
+            {
+                return File.ReadAllText(path);
+            }
+            catch (IOException)
+            {
+                if (triesLeft <= 0)
+                {
+                    throw;
+                }
+
+                Thread.Sleep(delay.Value);
+
+                return ReadAllTextWithRetry(path, --triesLeft, delay);
+            }
         }
     }
 }
