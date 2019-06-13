@@ -1,4 +1,5 @@
-﻿using Sdl.Web.Common.Configuration;
+﻿using Sdl.Web.Common;
+using Sdl.Web.Common.Configuration;
 using Sdl.Web.Common.Logging;
 using Sdl.Web.Common.Models;
 using SDL.DXA.Modules.CampaignContent.Models;
@@ -6,6 +7,7 @@ using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.IO.Compression;
+using System.Threading;
 using System.Web;
 using System.Web.Configuration;
 using Tridion.ContentDelivery.Meta;
@@ -22,7 +24,8 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
         private static CampaignAssetProvider _instance = null;
 
         private static readonly ConcurrentDictionary<string, CampaignContentMarkup> CachedMarkup = new ConcurrentDictionary<string, CampaignContentMarkup>();
-        private static readonly ConcurrentDictionary<string, object> FileLocks = new ConcurrentDictionary<string, object>();
+
+        private static readonly ConcurrentDictionary<string, SemaphoreSlim> Semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
 
         // Cache time to keep the ZIP file in staging sites.
         // This to avoid to have the ZIP file unzipped for each request on a XPM enabled staging site.
@@ -104,10 +107,12 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
                     localization.IsXpmEnabled && campaignContentMarkup.LastModified.AddSeconds(stagingCacheTime) < DateTime.Now)
                 {
                     Log.Info("Zip has changed. Extracting campaign " + campaignId + ", last modified = " + zipItem.LastModified);
-                    ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified);
-                    campaignContentMarkup = GetMarkup(campaignBaseDir);
-                    campaignContentMarkup.LastModified = zipItem.LastModified;
-                    CachedMarkup[cacheKey] = campaignContentMarkup;
+                    if (ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified, firstTime: false))
+                    {
+                        campaignContentMarkup = GetMarkup(campaignBaseDir);
+                        campaignContentMarkup.LastModified = zipItem.LastModified;
+                        CachedMarkup[cacheKey] = campaignContentMarkup;
+                    }
                 }
             }
             else
@@ -115,7 +120,10 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
                 if (!Directory.Exists(campaignBaseDir) || Directory.GetFiles(campaignBaseDir).Length == 0)
                 {
                     Log.Info("Extracting campaign " + campaignId + ", last modified = " + zipItem.LastModified);
-                    ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified);
+                    if (!ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified, firstTime: true))
+                    {
+                        throw new DxaException($"Could not extract campaign with ID: {campaignId}");
+                    }
                 }
 
                 campaignContentMarkup = GetMarkup(campaignBaseDir);
@@ -198,16 +206,25 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
         /// <param name="zipItem"></param>
         /// <param name="directory"></param>
         /// <param name="zipLastModified"></param>
-        protected void ExtractZip(StaticContentItem zipItem, String directory, DateTime zipLastModified)
+        protected bool ExtractZip(StaticContentItem zipItem, String directory, DateTime zipLastModified, bool firstTime)
         {
-            lock (GetLock(directory))
+            var fileLock = GetFileSemaphore(directory);
+
+            if (fileLock.CurrentCount == 0 && !firstTime)
+            {
+                // Other thread is already working on it. Keep using the existing version until the new one is available
+                //
+                return false;
+            }
+
+            using (fileLock.UseWait())
             {
                 if (Directory.Exists(directory))
                 {
                     if (Directory.GetCreationTime(directory) > zipLastModified && Directory.GetFiles(directory).Length > 0)
                     {
                         Log.Info("Campaign assets in directory '" + directory + "' is already up to date. Skipping recreation of campaign assets.");
-                        return;
+                        return false;
                     }
 
                     try
@@ -216,7 +233,7 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
                     }
                     catch (Exception e)
                     {
-                        Log.Warn("Could not delete cached campaign resources in: " + directory, e);
+                        Log.Warn($"Could not delete cached campaign resources in: {directory}. \nException: {e}");
                     }
                 }
 
@@ -234,9 +251,11 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
                 }
                 catch (Exception e)
                 {
-                    Log.Warn("Could not unzip campaign resources in: " + directory + ". Will rely on the current content there.", e);
+                    Log.Warn($"Could not unzip campaign resources in: {directory}. Will rely on the current content there. \nException: {e}");
+                    return false;
                 }
             }
+            return true;
 
         }
 
@@ -275,19 +294,48 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
             return markup;
         }
 
-        /// <summary>
-        /// Get a lock for use with a lock(){} block.
-        /// </summary>
-        /// <param name="name">Name of the lock</param>
-        /// <returns>The lock object</returns>
-        protected static Object GetLock(string name)
+        protected static SemaphoreSlim GetFileSemaphore(string name)
         {
-            return FileLocks.GetOrAdd(name, s => new object());
+            return Semaphores.GetOrAdd(name, s => new SemaphoreSlim(1));
         }
 
         private static string GetLocalStaticsFolder(string localizationId)
         {
             return string.Format("{0}\\{1}", StaticsFolder, localizationId);
+        }
+    }
+
+
+    // Extensions to SemaphoreSlim to make it possible to use it using blocks
+    //
+    static class SemaphoreSlimExtensions
+    {
+       public static IDisposable UseWait(
+       this SemaphoreSlim semaphore)
+        {
+            semaphore.Wait();
+            return new ReleaseWrapper(semaphore);
+        }
+
+        private class ReleaseWrapper : IDisposable
+        {
+            private readonly SemaphoreSlim _semaphore;
+
+            private bool _isDisposed;
+
+            public ReleaseWrapper(SemaphoreSlim semaphore)
+            {
+                _semaphore = semaphore;
+            }
+
+            public void Dispose()
+            {
+                if (_isDisposed)
+                    return;
+
+                _semaphore.Release();
+                _isDisposed = true;
+            }
         }
     }
 }
