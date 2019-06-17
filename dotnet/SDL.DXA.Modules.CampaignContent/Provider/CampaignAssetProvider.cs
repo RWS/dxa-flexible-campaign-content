@@ -74,27 +74,28 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
         /// <returns></returns>
         public CampaignContentMarkup GetCampaignContentMarkup(CampaignContentZIP campaignContentZip, Localization localization)
         {
-            StaticContentItem zipItem = GetZipItem(campaignContentZip, localization);
-            return LoadCampaignContentMarkup(campaignContentZip.Id, zipItem, localization);
+            return LoadCampaignContentMarkup(campaignContentZip, campaignContentZip.Id, localization);
         }
 
+        /// <summary>
+        /// Get markup of a specific campaign ID.
+        /// </summary>
+        /// <param name="campaignId"></param>
+        /// <param name="localization"></param>
+        /// <returns></returns>
         public CampaignContentMarkup GetCampaignContentMarkup(string campaignId, Localization localization)
         {
-            StaticContentItem zipItem = GetZipItem(campaignId, localization);
-            if (zipItem == null)
-            {
-                return null;
-            }
-            return LoadCampaignContentMarkup(campaignId, zipItem, localization);
+            return LoadCampaignContentMarkup(null, campaignId, localization);
         }
 
         /// <summary>
         /// Load markup for a specific campaign
         /// </summary>
+        /// <param name="campaignContentZip"></param>
         /// <param name="campaignId"></param>
         /// <param name="localization"></param>
         /// <returns></returns>
-        protected CampaignContentMarkup LoadCampaignContentMarkup(string campaignId, StaticContentItem zipItem, Localization localization)
+        protected CampaignContentMarkup LoadCampaignContentMarkup(CampaignContentZIP campaignContentZip, string campaignId, Localization localization)
         {
             CampaignContentMarkup campaignContentMarkup;
             string cacheKey = GetMarkupCacheKey(campaignId, localization);
@@ -103,32 +104,59 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
 
             if (campaignContentMarkup != null)
             {
-                if (!localization.IsXpmEnabled && zipItem.LastModified > campaignContentMarkup.LastModified ||
+                var zipFileLastModified = File.GetLastWriteTime(campaignContentMarkup.ZipFileName);
+                if (!localization.IsXpmEnabled && zipFileLastModified > campaignContentMarkup.LastModified ||
                     localization.IsXpmEnabled && campaignContentMarkup.LastModified.AddSeconds(stagingCacheTime) < DateTime.Now)
                 {
-                    Log.Info("Zip has changed. Extracting campaign " + campaignId + ", last modified = " + zipItem.LastModified);
-                    if (ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified, firstTime: false))
+                    Log.Info("Zip has changed. Extracting campaign " + campaignId + ", last modified = " + zipFileLastModified);
+
+                    var fileLock = GetFileSemaphore(campaignBaseDir);
+
+                    // If no other thread is already working on it. Else keep using the existing version until the new one is available.
+                    //
+                    if (fileLock.CurrentCount > 0)
                     {
-                        campaignContentMarkup = GetMarkup(campaignBaseDir);
-                        campaignContentMarkup.LastModified = zipItem.LastModified;
-                        CachedMarkup[cacheKey] = campaignContentMarkup;
+                        using (fileLock.UseWait())
+                        {
+                            try
+                            {
+                                var zipItem = campaignContentZip != null ? GetZipItem(campaignContentZip, localization) : GetZipItem(campaignId, localization);
+                                if (ExtractZip(zipItem.ContentItem, campaignBaseDir, zipItem.ContentItem.LastModified))
+                                {
+                                    campaignContentMarkup = GetMarkup(campaignBaseDir);
+                                    campaignContentMarkup.LastModified = zipItem.ContentItem.LastModified;
+                                    campaignContentMarkup.ZipFileName = zipItem.LocalFileName;
+                                    CachedMarkup[cacheKey] = campaignContentMarkup;
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Log.Error($"Could not get/extract ZIP file. Retry next time the campaign is accessed. \nException: {e}");
+                            }
+                        }
                     }
                 }
             }
             else
             {
-                if (!Directory.Exists(campaignBaseDir) || Directory.GetFiles(campaignBaseDir).Length == 0)
+                var fileLock = GetFileSemaphore(campaignBaseDir);
+                using (fileLock.UseWait())
                 {
-                    Log.Info("Extracting campaign " + campaignId + ", last modified = " + zipItem.LastModified);
-                    if (!ExtractZip(zipItem, campaignBaseDir, zipItem.LastModified, firstTime: true))
+                    var zipItem = campaignContentZip != null ? GetZipItem(campaignContentZip, localization) : GetZipItem(campaignId, localization);
+                    if (!Directory.Exists(campaignBaseDir) || Directory.GetFiles(campaignBaseDir).Length == 0)
                     {
-                        throw new DxaException($"Could not extract campaign with ID: {campaignId}");
+                        Log.Info("Extracting campaign " + campaignId + ", last modified = " + zipItem.ContentItem.LastModified);
+                        if (!ExtractZip(zipItem.ContentItem, campaignBaseDir, zipItem.ContentItem.LastModified))
+                        {
+                            throw new DxaException($"Could not extract campaign with ID: {campaignId}");
+                        }
                     }
-                }
 
-                campaignContentMarkup = GetMarkup(campaignBaseDir);
-                campaignContentMarkup.LastModified = zipItem.LastModified;
-                CachedMarkup[cacheKey] = campaignContentMarkup;
+                    campaignContentMarkup = GetMarkup(campaignBaseDir);
+                    campaignContentMarkup.LastModified = zipItem.ContentItem.LastModified;
+                    campaignContentMarkup.ZipFileName = zipItem.LocalFileName;
+                    CachedMarkup[cacheKey] = campaignContentMarkup;
+                }
             }
 
             return campaignContentMarkup;
@@ -171,20 +199,45 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
         /// </summary>
         /// <param name="campaignContentZip"></param>
         /// <returns></returns>
-        protected StaticContentItem GetZipItem(CampaignContentZIP campaignContentZip, Localization localization)
+        protected ZipItem GetZipItem(CampaignContentZIP campaignContentZip, Localization localization)
         {
-            return SiteConfiguration.ContentProvider.GetStaticContentItem(campaignContentZip.Url, localization);
+            var item = SiteConfiguration.ContentProvider.GetStaticContentItem(campaignContentZip.Url, localization);
+            return new ZipItem
+            {
+                ContentItem = item,
+                UrlPath = campaignContentZip.Url,
+                LocalFileName = GetBinaryLocalFileName(campaignContentZip.Url, localization)
+            };
         }
 
-        protected StaticContentItem GetZipItem(string itemId, Localization localization)
+        protected ZipItem GetZipItem(string itemId, Localization localization)
         {
             BinaryMetaFactory binaryMetaFactory = new BinaryMetaFactory();
             BinaryMeta binaryMeta = binaryMetaFactory.GetMeta("tcm:" + localization.Id + "-" + itemId);
             if (binaryMeta != null)
             {
-                return SiteConfiguration.ContentProvider.GetStaticContentItem(binaryMeta.UrlPath, localization);
+                var item = SiteConfiguration.ContentProvider.GetStaticContentItem(binaryMeta.UrlPath, localization);
+                return new ZipItem
+                {
+                    ContentItem = item,
+                    UrlPath = binaryMeta.UrlPath,
+                    LocalFileName = GetBinaryLocalFileName(binaryMeta.UrlPath, localization)
+                }; 
             }
             return null;
+        }
+
+        /// <summary>
+        /// Get binary local file of a binary with a given URL path and localization.
+        /// </summary>
+        /// <param name="urlPath"></param>
+        /// <param name="localization"></param>
+        /// <returns></returns>
+        protected string GetBinaryLocalFileName(string urlPath, Localization localization)
+        {
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string localFilePath = $"{baseDir}/{localization.BinaryCacheFolder}/{urlPath}";
+            return localFilePath;
         }
 
         /// <summary>
@@ -206,57 +259,44 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
         /// <param name="zipItem"></param>
         /// <param name="directory"></param>
         /// <param name="zipLastModified"></param>
-        protected bool ExtractZip(StaticContentItem zipItem, String directory, DateTime zipLastModified, bool firstTime)
-        {
-            var fileLock = GetFileSemaphore(directory);
-
-            if (fileLock.CurrentCount == 0 && !firstTime)
+        protected bool ExtractZip(StaticContentItem zipItem, String directory, DateTime zipLastModified)
+        { 
+            if (Directory.Exists(directory))
             {
-                // Other thread is already working on it. Keep using the existing version until the new one is available
-                //
-                return false;
-            }
-
-            using (fileLock.UseWait())
-            {
-                if (Directory.Exists(directory))
+                if (Directory.GetCreationTime(directory) > zipLastModified && Directory.GetFiles(directory).Length > 0)
                 {
-                    if (Directory.GetCreationTime(directory) > zipLastModified && Directory.GetFiles(directory).Length > 0)
-                    {
-                        Log.Info("Campaign assets in directory '" + directory + "' is already up to date. Skipping recreation of campaign assets.");
-                        return false;
-                    }
-
-                    try
-                    {
-                        Directory.Delete(directory, true);
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Warn($"Could not delete cached campaign resources in: {directory}. \nException: {e}");
-                    }
-                }
-
-                if (!Directory.Exists(directory))
-                {
-                    Directory.CreateDirectory(directory);
+                    Log.Info("Campaign assets in directory '" + directory + "' is already up to date. Skipping recreation of campaign assets.");
+                    return false;
                 }
 
                 try
                 {
-                    using (ZipArchive archive = new ZipArchive(zipItem.GetContentStream()))
-                    {
-                        archive.ExtractToDirectory(directory);
-                    }
+                    Directory.Delete(directory, true);
                 }
                 catch (Exception e)
                 {
-                    Log.Warn($"Could not unzip campaign resources in: {directory}. Will rely on the current content there. \nException: {e}");
-                    return false;
+                    Log.Warn($"Could not delete cached campaign resources in: {directory}. \nException: {e}");
                 }
             }
-            return true;
 
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            try
+            {
+                using (ZipArchive archive = new ZipArchive(zipItem.GetContentStream()))
+                {
+                    archive.ExtractToDirectory(directory);
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Warn($"Could not unzip campaign resources in: {directory}. Will rely on the current content there. \nException: {e}");
+                return false;
+            }
+            return true;
         }
 
         /// <summary>
