@@ -143,6 +143,12 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
                 using (fileLock.UseWait())
                 {
                     var zipItem = campaignContentZip != null ? GetZipItem(campaignContentZip, localization) : GetZipItem(campaignId, localization);
+                    if (zipItem == null)
+                    {
+                        // Non-existing campaign.
+                        //
+                        return null;
+                    }
                     if (!Directory.Exists(campaignBaseDir) || Directory.GetFiles(campaignBaseDir).Length == 0)
                     {
                         Log.Info("Extracting campaign " + campaignId + ", last modified = " + zipItem.ContentItem.LastModified);
