@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.sdl.dxa.modules.campaigncontent</groupId>
+    <artifactId>campaigncontent-parent</artifactId>
+    <version>1.3.0</version>
+
+    <packaging>pom</packaging>
+
+    <name>Instant Campaign Parent</name>
+    <description>Instant Campaign Parent</description>
+
+    <properties>
+      <java-version>1.8</java-version>
+      <dxa.version>2.2.3</dxa.version>
+      <dxa-release-branch>release/2.0</dxa-release-branch>
+    </properties>
+
+    <dependencyManagement>
+     <dependencies>
+            <dependency>
+                <groupId>com.sdl.dxa</groupId>
+                <artifactId>dxa-oss-parent</artifactId>
+                <version>${dxa.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+     </dependencies>
+ </dependencyManagement>
+
+    <modules>
+      <module>campaigncontent-dxa-module</module>
+      <module>campaigncontent-dxa-webapp</module>
+      <module>dxa-webapp</module>
+  </modules>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>${java-version}</source>
+                    <target>${java-version}</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
