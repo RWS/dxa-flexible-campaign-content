@@ -10,7 +10,7 @@ Either SDL Web Content Porter 9.0/9.1/9.5 can be used to import the above packag
 
 #### Instructions for using the PowerShell script:
 
-Before running the import script the needed DLLs needs to be copied. See [Import/Export DLLs](./ImportExport/README.md) for further information.
+Before running the import script the needed DLLs needs to be copied. See [Import/Export DLLs](./ImportExport/sites9/README.md) for further information.
 
 Import the CMS package by doing the following
 

@@ -93,7 +93,7 @@ SDL Tridion Sites CMS:
     - Addon package for SDL Tridion Sites 9.1/9.5: [InstantCampaign-1.3.0.zip](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/InstantCampaign-1.3.0.zip)
 
 
-2. If you compile the extension yourself for Sites 9.0 you need to merge the DLLs into one single DLL by using [ILMerge](https://www.microsoft.com/en-us/download/details.aspx?id=17630). Use the merge_dll.bat to generate a merged DLL. For Sites 9.1 and above there will be Addon package ZIP automatically generated when building.
+2. If you compile the extension yourself for Sites 9.0 you need to merge the DLLs into one single DLL by using [ILMerge](https://www.microsoft.com/en-us/download/details.aspx?id=17630). Use the merge_dll.bat to generate a merged DLL. For Sites 9.1 and above an Addon package ZIP will automatically be generated when building.
 
 3. Sites 9.1/9.5: Upload the Addon package to the Addon Service. The campaign upload extension is automatically installed in SDL Tridion Sites.
 4. Sites 9.0: Upload the DLL to your SDL Tridion Sites server and place it somewhere local on the server. Do not forget to unblock the DLL to avoid assembly loading issues.
