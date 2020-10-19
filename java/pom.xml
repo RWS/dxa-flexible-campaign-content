@@ -32,7 +32,6 @@
     <modules>
       <module>campaigncontent-dxa-module</module>
       <module>campaigncontent-dxa-webapp</module>
-      <module>dxa-webapp</module>
   </modules>
 
     <build>
