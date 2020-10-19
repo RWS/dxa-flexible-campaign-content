@@ -9,13 +9,10 @@ in their own tool suites. When ready they can package all campaign assets (HTML,
 The benefit of this extension is that digital agencies are given the freedom (within some defined boundaries of the brand guidelines, used CSS framework etc)
 to build campaign content with unique layout and interaction elements. And that without the need of creating specific templates in SDL Tridion Sites for the created campaign.
 
-New functionality in v1.2:
-* Support for DXA 2.0
-* Support for tagging of links
-* Support for extraction of external image URLs
-* Support for image properties
-* Support for image alternate texts
-* Support for url variables (%URL%) in tagged properties
+New functionality in v1.3:
+* Support for DXA 2.2 and SDL Tridion Sites 9.0/9.1/9.5
+* Performance improvements
+* Support for 9.1/9.5 Addon Service
 
 A complete distribution is found on SDL AppStore:  https://appstore.sdl.com/web-content-management/app/instant-campaign/748/
 
@@ -82,36 +79,37 @@ Functionality
 * All editable content will be merged into the campaign markup.
 * If DXA runs in a staging mode additional XPM markup will be generated around the editable content to make it inline editable.
 
-The extension has been verified both on SDL Web 8.1.1 and SDL Web 8.5 using DXA 2.0.
-Support for SDL Tridion Sites 9.0 and DXA 2.1 will soon be available.
+The extension has been verified both on SDL Tridion Sites 9.0, 9.1 and 9.5 using DXA 2.2.
 
 Installation
 --------------
 
 Follow the below steps to install this extension in SDL Tridion Sites CMS and DXA.
 
-CMS:
+SDL Tridion Sites CMS:
 
-1. Either compile the C# code in the 'cms/campaign-upload-extension' directory or download the pre-compiled DDL for SDL Web 8.5 here:
-    - For SDL Web 8.5: [campaign-upload-extension-v1.2.0.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.2.0.dll)
-    - For SDL Web 8.1.1:
-    [campaign-upload-extension-v1.2.0-8.1.1.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.2.0-8.1.1.dll)
-2. If you compile the extension yourself you need to merge the DLLs into one single DLL by using [ILMerge](https://www.microsoft.com/en-us/download/details.aspx?id=17630). Use the merge_dll.bat to generate a merged DLL.
+1. Either compile the C# code in the 'cms/campaign-upload-extension' directory or download the precompiled Addon package/DLL here:
+    - DLL for SDL Tridion Sites 9.0: [campaign-upload-extension-v1.3.0.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.3.0.dll)
+    - Addon package for SDL Tridion Sites 9.1/9.5: [InstantCampaign-1.3.0.zip](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/InstantCampaign-1.3.0.zip)
 
-3. Upload the DLL to your SDL Tridion Sites server and place it somewhere local on the server. Do not forget to unblock the DLL to avoid assembly loading issues.
+
+2. If you compile the extension yourself for Sites 9.0 you need to merge the DLLs into one single DLL by using [ILMerge](https://www.microsoft.com/en-us/download/details.aspx?id=17630). Use the merge_dll.bat to generate a merged DLL. For Sites 9.1 and above there will be Addon package ZIP automatically generated when building.
+
+3. Sites 9.1/9.5: Upload the Addon package to the Addon Service. The campaign upload extension is automatically installed in SDL Tridion Sites.
+4. Sites 9.0: Upload the DLL to your SDL Tridion Sites server and place it somewhere local on the server. Do not forget to unblock the DLL to avoid assembly loading issues.
    Then add the following in your %SDLWEB_HOME%\config\Tridion.ContentManager.config in <extensions> tag:
 
    ```
-   <add assemblyFileName="[PATH TO DLL]\campaign-upload-extension-v1.2.0.dll"/>
+   <add assemblyFileName="[PATH TO DLL]\campaign-upload-extension-v1.3.0.dll"/>
    ```
 
-4. After that restart the services 'SDL Web Content Manager Service Host' and 'SDL Web Transport Distributor Service'
-5. Import the needed schemas and templates by following the instructions given here: [CMS import script](./cms/import/README.md)
-6. If you want to use the SDL Web Translation Manager for translating the campaigns you have to open up the embedded schema 'Campaign Content - TaggedContent'. And there mark the field 'content' as translatable.
+5. Sites 9.0: After that restart the services 'SDL Web Content Manager Service Host' and 'SDL Web Transport Distributor Service'
+6. Import the needed schemas and templates by following the instructions given here: [CMS import script](./cms/import/README.md)
+7. If you want to use the SDL Tridion Sites Translation Manager for translating the campaigns you have to open up the embedded schema 'Campaign Content - TaggedContent'. And there mark the field 'content' as translatable.
 
 DXA.NET:
 
-1. If you do not have a DXA.NET setup (for SDL Web 8/8.5) you can easily do this by following the instructions given here: [Installing the web application (.NET)](https://docs.sdl.com/LiveContent/content/en-US/SDL%20DXA-v10/GUID-001D829E-1141-4B18-B696-894DF27B6DA1)
+1. If you do not have a DXA.NET setup (for SDL Tridion Sites 9.x) you can easily do this by following the instructions given here: [Installing the web application (.NET)](https://docs.sdl.com/784837/748556/sdl-digital-experience-accelerator-2-2/installing-the-------------dxa--net-web-application-for-------------tridion-sites)
 2. Either open up the solution 'dotnet/SDL.DXA.Modules.CampaignContent.sln' or add the VS project under the directory 'dotnet' to your Visual Studio solution
 4. Set the environment variable %DXA_SITE_DIR% to point to your DXA Site path (in visual studio or in your IIS instance)
 5. Restart Visual studio and rebuild the solution. Verify so the CampaignContent Area and DLLs are copied to your site folder
@@ -120,7 +118,7 @@ DXA.NET:
 
 DXA.Java:
 
-1. Install the DXA module in your local Maven repository by doing the following in the directory 'java/campaigncontent-dxa-module':
+1. Install the DXA module in your local Maven repository by doing the following in the directory 'java':
 
    ```
     mvn install
@@ -134,7 +132,7 @@ DXA.Java:
         <dependency>
             <groupId>com.sdl.dxa.modules.campaigncontent</groupId>
             <artifactId>campaigncontent-dxa-module</artifactId>
-            <version>1.2.0</version>
+            <version>1.3.0</version>
         </dependency>
 
     </dependencies>
@@ -142,6 +140,8 @@ DXA.Java:
 
 3. Package your webapp and deploy into your JEE application server
 4. Now is your DXA instance ready for rendering of flexible campaign content
+
+In addition there is a example DXA2.2 webapp including Instant Campaign available in the directory 'java/campaigncontent-dxa-webapp'.
 
 Getting started
 ------------------
@@ -285,7 +285,7 @@ We intend to follow Gitflow (http://nvie.com/posts/a-successful-git-branching-mo
 
 License
 ---------
-Copyright (c) 2018 SDL Group.
+Copyright (c) 2020 SDL Group.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
