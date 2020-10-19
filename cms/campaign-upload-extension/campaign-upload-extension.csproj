@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>SDL.Web.Extensions.CampaignUpload</RootNamespace>
     <AssemblyName>campaign-upload-extension</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -52,19 +53,19 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
-    <Reference Include="Tridion.Common, Version=8.5.0.60, Culture=neutral, PublicKeyToken=349a39f202fa9b53, processorArchitecture=MSIL">
+    <Reference Include="Tridion.Common, Version=9.1.0, Culture=neutral, PublicKeyToken=349a39f202fa9b53, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\Tridion.Common.dll</HintPath>
     </Reference>
-    <Reference Include="Tridion.ContentManager, Version=8.5.0.466, Culture=neutral, PublicKeyToken=360aac4d3354074b, processorArchitecture=MSIL">
+    <Reference Include="Tridion.ContentManager, Version=9.1.0, Culture=neutral, PublicKeyToken=360aac4d3354074b, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\Tridion.ContentManager.dll</HintPath>
     </Reference>
-    <Reference Include="Tridion.ContentManager.Common, Version=8.5.0.466, Culture=neutral, PublicKeyToken=ddfc895746e5ee6b, processorArchitecture=MSIL">
+    <Reference Include="Tridion.ContentManager.Common, Version=9.1.0, Culture=neutral, PublicKeyToken=ddfc895746e5ee6b, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\Tridion.ContentManager.Common.dll</HintPath>
     </Reference>
-    <Reference Include="Tridion.Logging, Version=8.5.0.60, Culture=neutral, PublicKeyToken=ddfc895746e5ee6b, processorArchitecture=MSIL">
+    <Reference Include="Tridion.Logging, Version=9.1.0, Culture=neutral, PublicKeyToken=ddfc895746e5ee6b, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\Tridion.Logging.dll</HintPath>
     </Reference>
@@ -75,6 +76,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="manifest.json">
+      <Generator>ResXFileCodeGenerator</Generator>
+    </None>
     <None Include="merge_dll.bat" />
     <None Include="packages.config" />
   </ItemGroup>
@@ -86,14 +90,14 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>if not exist  "$(ProjectDir)\AddonPackage" mkdir "$(ProjectDir)\AddonPackage"
+xcopy "$(TargetDir)campaign-upload-extension.dll" "$(ProjectDir)AddonPackage" /Y
+xcopy "$(TargetDir)HtmlAgilityPack.dll" "$(ProjectDir)AddonPackage" /Y
+xcopy "$(TargetDir)Fizzler.Systems.HtmlAgilityPack.dll" "$(ProjectDir)AddonPackage" /Y
+xcopy "$(TargetDir)Fizzler.dll" "$(ProjectDir)AddonPackage" /Y
+xcopy "$(ProjectDir)manifest.json"  "$(ProjectDir)AddonPackage" /Y
+if exist  "$(ProjectDir)\InstantCampaign-1.3.0.zip" del "$(ProjectDir)\InstantCampaign-1.3.0.zip"
+powershell.exe -nologo -noprofile -command "&amp; { Add-Type -A System.IO.Compression.FileSystem; [IO.Compression.ZipFile]::CreateFromDirectory('$(ProjectDir)\AddonPackage', '$(ProjectDir)\InstantCampaign-1.3.0.zip'); }"
+</PostBuildEvent>
   </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>
