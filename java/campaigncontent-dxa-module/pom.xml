@@ -4,27 +4,17 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+      <groupId>com.sdl.dxa.modules.campaigncontent</groupId>
+      <artifactId>campaigncontent-parent</artifactId>
+      <version>1.3.0</version>
+    </parent>
+
     <groupId>com.sdl.dxa.modules.campaigncontent</groupId>
     <artifactId>campaigncontent-dxa-module</artifactId>
-    <version>1.2.0</version>
 
-    <properties>
-      <java-version>1.8</java-version>
-      <dxa.version>2.0.0</dxa.version>
-      <dxa-release-branch>release/2.0</dxa-release-branch>
-    </properties>
-
-    <dependencyManagement>
-     <dependencies>
-            <dependency>
-                <groupId>com.sdl.dxa</groupId>
-                <artifactId>dxa-oss-parent</artifactId>
-                <version>${dxa.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-     </dependencies>
- </dependencyManagement>
+    <name>Instant Campaign DXA Module</name>
+    <description>DXA Module for Instant Campaign</description>
 
     <dependencies>
 
@@ -74,19 +64,5 @@
         </dependency>
 
     </dependencies>
-
-    <build>
-       <plugins>
-           <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-compiler-plugin</artifactId>
-               <version>3.1</version>
-               <configuration>
-                   <source>${java-version}</source>
-                   <target>${java-version}</target>
-               </configuration>
-           </plugin>
-       </plugins>
-   </build>
 
 </project>

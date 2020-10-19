@@ -1,10 +1,7 @@
 ﻿using Sdl.Web.Common.Models;
 using Sdl.Web.Mvc.Configuration;
 using SDL.DXA.Modules.CampaignContent.Models;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 using System.Web.Routing;
 

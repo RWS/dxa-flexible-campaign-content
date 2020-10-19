@@ -17,6 +17,7 @@ import org.springframework.web.context.WebApplicationContext;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -34,6 +35,8 @@ public class CampaignAssetProvider {
     private WebApplicationContext webApplicationContext;
 
     private Map<String, CampaignContentMarkup> cachedMarkup = new HashMap<>();
+
+    private Map<String, Semaphore> semaphores = new HashMap<>();
 
     // Cache time to keep the ZIP file in staging sites.
     // This to avoid to have the ZIP file unzipped for each request on a XPM enabled staging site.
@@ -109,14 +112,33 @@ public class CampaignAssetProvider {
                 !this.directoryHasFiles(baseDir) ||
                 !localization.isStaging() && zipItem.getLastModified() > markup.getLastModified() ||
                 localization.isStaging() && markup.getLastModified()+(stagingCacheTime*1000) < System.currentTimeMillis()) {
+            Semaphore fileLock = this.semaphores.computeIfAbsent(baseDir.toString(), (k) -> new Semaphore(1));
+            if (markup == null) {
+                try {
+                    // Acquire a blocking lock as there is no old campaign available. All other threads have to wait for this to complete.
+                    //
+                    fileLock.acquire();
+                } catch (InterruptedException e) {
+                    return null;
+                }
+            } else {
+                // Try to acquire the file lock. If not available (due to other thread is already working on it), return the existing markup.
+                //
+                if (!fileLock.tryAcquire()) {
+                    return markup;
+                }
+            }
+
             try {
                 markup = extractZip(zipItem, baseDir);
                 markup.setLastModified(zipItem.getLastModified());
                 this.cachedMarkup.put(cacheKey, markup);
-            }
-            catch ( IOException e ) {
+            } catch (IOException e) {
                 throw new ContentProviderException("Could not extract free format ZIP file.", e);
+            } finally {
+                fileLock.release();
             }
+
         }
         return markup;
     }

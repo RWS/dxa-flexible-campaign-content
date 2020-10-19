@@ -1,0 +1,18 @@
+﻿{
+	"manifestVersion": "1.0",
+	"id": "InstantCampaign",
+	"version": "1.3.0",
+	"name": "Instant Campaign",
+	"description": "Instant Campaign - Extension that extract content & media from a campaign ZIP",
+	"author": "SDL Plc",
+	"requireConfiguration": "No",
+	"extensions": [
+		{
+			"name": "InstantCampaignEventSystemExtension",
+			"type": "CMEventHandler",
+			"properties": {
+				"assemblyFileSource": "campaign-upload-extension.dll"
+			}
+		}
+	]
+}

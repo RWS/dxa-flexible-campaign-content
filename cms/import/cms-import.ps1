@@ -2,7 +2,7 @@
 .SYNOPSIS
    Import Campaign Content DXA items into the Content Manager System.
 .DESCRIPTION
-   This script imports E-Commerce DXA items into the CMS using the CM Import/Export service and Core Service.
+   This script imports DXA items into the CMS using the CM Import/Export service and Core Service.
 .EXAMPLE
    & .\cms-import.ps1 -cmsUrl "http://localhost:81/" -moduleZip "module.zip"
 .NOTES

@@ -16,3 +16,4 @@ Tridion.*.dll
 *.suo
 packages/
 .vs/
+AddonPackage/
