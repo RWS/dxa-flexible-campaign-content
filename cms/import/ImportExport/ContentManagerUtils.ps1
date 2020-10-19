@@ -25,6 +25,107 @@ function Get-TempFolder($folderName)
     return $tempFolder
 }
 
+function Test-Url($baseUrl, $endPointUrl) 
+{
+    try
+    {
+        $url = $baseUrl.TrimEnd("/") + $endPointUrl
+        if ($cmsAuth -eq "Basic" -and $cmsUserName) 
+        {
+            $securePass = ConvertTo-SecureString -String $cmsUserPassword -AsPlainText -Force
+            $credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ($cmsUserName, $securePass)
+            Invoke-WebRequest $url -DisableKeepAlive -UseBasicParsing -Method get -Credential $credentials
+        }
+        else
+        {
+            # Don't use credentials if Windows auth is used
+            Invoke-WebRequest $url -DisableKeepAlive -UseBasicParsing -Method get
+        }
+        return $true
+    }
+    catch
+    {
+        Write-Host "Cannot retrieve data for URL '$url': $($_.Exception.Message)"
+        return $false  
+    }  
+}
+
+function Get-CoreServiceContractVersion 
+{
+    Write-Verbose "Determining latest contract version supported by Core Service ..."
+
+    foreach($v in "201701", "201501")
+    {
+        if(Test-Url $cmsUrl "/webservices/CoreService$v.svc?wsdl")
+        {        
+            Write-Verbose "Core Service supports contract version $v"
+            return $v
+        }       
+    }
+
+    throw "Unable to determine Core Service version using base URL '$cmsUrl'"
+}    
+
+function Get-ImportExportContractVersion 
+{
+    if(Is-Sites9) 
+    { 
+    	return "201601"
+    }   
+ 
+    return "201501"
+}   
+
+function Get-SecurePass($password)
+{
+    if (!$password) 
+    {
+        return "";
+    }
+    $securePass = ConvertTo-SecureString -String $password -AsPlainText -Force
+    return $securePass;
+}
+
+function Get-Credentials([String] $type, [String] $name, [String] $password)
+{
+
+    Write-Host "Getting credentials for auth type $type. User name is: $name" | Out-Null
+
+    switch ($type) 
+    {
+        "Basic" 
+        {
+            if (!$name -or !$password) {
+                throw "CMS user name and password must be specified for Basic authentication."
+            }
+
+            Write-Host "Using Basic authentication with CMS user name: $name" | Out-Null
+            $securePass = Get-SecurePass($password)
+            $creds = New-Object System.Net.NetworkCredential $name, $securePass
+        }
+
+        "Windows" 
+        {
+            if ($name) {
+                Write-Host "Using Windows authentication with CMS user name: $name" | Out-Null
+                $securePass = Get-SecurePass($password);
+                $creds = New-Object System.Net.NetworkCredential $name, $securePass
+            }
+            else {
+                Write-Host "Using Windows authentication with the current Windows user's credentials (no CMS user specified explicitly)."
+                $creds = [System.Net.CredentialCache]::DefaultNetworkCredentials
+            }
+        }
+    }
+
+    return $creds
+}
+
+function Is-Sites9 {
+    # sites9 uses a contract version of 201701 (whereas web8 will use 201501)
+    return (Get-CoreServiceContractVersion) -eq "201701"
+} 
+
 function Initialize-CoreServiceClient($importExportFolder, $tempFolder) 
 {
     Write-Verbose "Initializing Core Service client using folder '$importExportFolder'"
@@ -50,9 +151,10 @@ function Initialize-CoreServiceClient($importExportFolder, $tempFolder)
         $importExportFolder = $tempFolder
     }
 
+    $platform = if(Is-Sites9) { "sites9" } else { "web8" }   
     Add-Type -assemblyName mscorlib
     Add-Type -assemblyName System.ServiceModel
-    Add-Type -Path "$importExportFolder\Tridion.ContentManager.CoreService.Client.dll"
+    Add-Type -Path "$importExportFolder\$platform\Tridion.ContentManager.CoreService.Client.dll"
 
     Write-Verbose "Done."
 
@@ -65,24 +167,20 @@ function Initialize-ImportExport($importExportFolder, $tempFolder)
 
     Write-Verbose "Initializing Import/Export using folder '$importExportFolder'"
 
-    Add-Type -Path "$importExportFolder\Tridion.Common.dll"
-    Add-Type -Path "$importExportFolder\Tridion.ContentManager.ImportExport.Common.dll"
-    Add-Type -Path "$importExportFolder\Tridion.ContentManager.ImportExport.Client.dll"
+    $platform = if(Is-Sites9) { "sites9" } else { "web8" }   
+    Add-Type -Path "$importExportFolder\$platform\Tridion.Common.dll"
+    Add-Type -Path "$importExportFolder\$platform\Tridion.ContentManager.ImportExport.Common.dll"
+    Add-Type -Path "$importExportFolder\$platform\Tridion.ContentManager.ImportExport.Client.dll"
 
     Write-Verbose "Done."
 }
 
 function Set-ClientCredentials($wcfClient) {
+    Write-Host "Setting credentials for Core Service Client for user $cmsUserName. Authentication type is $cmsAuth"
     switch ($cmsAuth) {
         "Windows" {
-            if ($cmsUserName) {
-                Write-Verbose "Using Windows authentication with CMS user name: $cmsUserName"
-                $wcfClient.ClientCredentials.Windows.ClientCredential = New-Object System.Net.NetworkCredential $cmsUserName, $cmsUserPassword
-            }
-            else {
-                Write-Verbose "Using Windows authentication with the current Windows user's credentials (no CMS user specified explicitly)." 
-                $wcfClient.ClientCredentials.Windows.ClientCredential = [System.Net.CredentialCache]::DefaultNetworkCredentials;
-            }
+            $creds = Get-Credentials -type $cmsAuth -name $cmsUserName -password $cmsUserPassword;
+            $wcfClient.ClientCredentials.Windows.ClientCredential = $creds;
         }
         "Basic" {
             if (!$cmsUserName -or !$cmsUserPassword) {
@@ -111,37 +209,37 @@ function Get-ImportExportServiceClient {
 	$binding.ReaderQuotas.MaxBytesPerRead = [int]::MaxValue
 	$binding.ReaderQuotas.MaxStringContentLength = [int]::MaxValue
 	$binding.ReaderQuotas.MaxNameTableCharCount = [int]::MaxValue
-
-
-	switch($type)
-	{
-		"Service" {
+    $contract = Get-ImportExportContractVersion
+    switch($type)
+    {
+        "Service" {
             if ($cmsUrl.StartsWith("https")) { $binding.Security.Mode = "Transport" }
             else { $binding.Security.Mode = "TransportCredentialOnly" }
-			$binding.Security.Transport.ClientCredentialType = $cmsAuth
-			$endpoint = New-Object System.ServiceModel.EndpointAddress ($cmsUrl + "webservices/ImportExportService201501.svc/basicHttp")
-			$client = New-Object Tridion.ContentManager.ImportExport.Client.ImportExportServiceClient $binding,$endpoint
-		}
+            $binding.Security.Transport.ClientCredentialType = $cmsAuth
+            $endpoint = New-Object System.ServiceModel.EndpointAddress ($cmsUrl + "webservices/ImportExportService$contract.svc/basicHttp")
+            $client = New-Object Tridion.ContentManager.ImportExport.Client.ImportExportServiceClient $binding,$endpoint
+        }
  
-		"Download" {
+        "Download" {
             if ($cmsUrl.StartsWith("https")) { $binding.Security.Mode = "Transport" }
             else { $binding.Security.Mode = "TransportCredentialOnly" }
-			$binding.Security.Transport.ClientCredentialType = $cmsAuth
-			$binding.TransferMode = "StreamedResponse"
-			$binding.MessageEncoding = "Mtom"
-			$endpoint = New-Object System.ServiceModel.EndpointAddress ($cmsUrl + "webservices/ImportExportService201501.svc/streamDownload_basicHttp")	
-			$client = New-Object Tridion.ContentManager.ImportExport.Client.ImportExportStreamDownloadClient $binding,$endpoint
-		}
+            $binding.Security.Transport.ClientCredentialType = $cmsAuth
+            $binding.TransferMode = "StreamedResponse"
+            $binding.MessageEncoding = "Mtom"
+            $endpoint = New-Object System.ServiceModel.EndpointAddress ($cmsUrl + "webservices/ImportExportService$contract.svc/streamDownload_basicHttp") 
+            $client = New-Object Tridion.ContentManager.ImportExport.Client.ImportExportStreamDownloadClient $binding,$endpoint
+        }
  
-		"Upload" {
+        "Upload" {
             if ($cmsUrl.StartsWith("https")) { $binding.Security.Mode = "Transport" }
             else { $binding.Security.Mode = "None" }
-			$binding.TransferMode = "StreamedRequest"
-			$binding.MessageEncoding = "Mtom"
-			$endpoint = New-Object System.ServiceModel.EndpointAddress ($cmsUrl + "webservices/ImportExportService201501.svc/streamUpload_basicHttp")
-			$client = New-Object Tridion.ContentManager.ImportExport.Client.ImportExportStreamUploadClient $binding,$endpoint
-		}
-	}
+            $binding.TransferMode = "StreamedRequest"
+            $binding.MessageEncoding = "Mtom"
+            $endpoint = New-Object System.ServiceModel.EndpointAddress ($cmsUrl + "webservices/ImportExportService$contract.svc/streamUpload_basicHttp")
+            $client = New-Object Tridion.ContentManager.ImportExport.Client.ImportExportStreamUploadClient $binding,$endpoint
+        }
+    }
+
 
     Set-ClientCredentials($client)
 
@@ -157,24 +255,25 @@ function Get-CoreServiceClient {
     )        
     Write-Verbose "Getting Core Service Client with type '$type' for CMS URL '$cmsUrl' ..."
 
-	$binding = New-Object System.ServiceModel.BasicHttpBinding
-	$binding.MaxBufferPoolSize = [int]::MaxValue
-	$binding.MaxReceivedMessageSize = [int]::MaxValue
-	$binding.ReaderQuotas.MaxArrayLength = [int]::MaxValue
-	$binding.ReaderQuotas.MaxBytesPerRead = [int]::MaxValue
-	$binding.ReaderQuotas.MaxStringContentLength = [int]::MaxValue
-	$binding.ReaderQuotas.MaxNameTableCharCount = [int]::MaxValue
-
-	switch($type)
-	{
-		"Service" {
+    $binding = New-Object System.ServiceModel.BasicHttpBinding
+    $binding.SendTimeout = [int]::MaxValue
+    $binding.MaxBufferPoolSize = [int]::MaxValue
+    $binding.MaxReceivedMessageSize = [int]::MaxValue
+    $binding.ReaderQuotas.MaxArrayLength = [int]::MaxValue
+    $binding.ReaderQuotas.MaxBytesPerRead = [int]::MaxValue
+    $binding.ReaderQuotas.MaxStringContentLength = [int]::MaxValue
+    $binding.ReaderQuotas.MaxNameTableCharCount = [int]::MaxValue   
+    $contract = Get-CoreServiceContractVersion
+    switch($type)
+    {
+        "Service" {
             if ($cmsUrl.StartsWith("https")) { $binding.Security.Mode = "Transport" }
             else { $binding.Security.Mode = "TransportCredentialOnly" }
-			$binding.Security.Transport.ClientCredentialType = $cmsAuth
-			$endpoint = New-Object System.ServiceModel.EndpointAddress ($cmsUrl + "webservices/CoreService201501.svc/basicHttp")
-			$client = New-Object Tridion.ContentManager.CoreService.Client.CoreServiceClient $binding,$endpoint
+            $binding.Security.Transport.ClientCredentialType = $cmsAuth
+            $endpoint = New-Object System.ServiceModel.EndpointAddress ($cmsUrl + "webservices/CoreService$contract.svc/basicHttp")            
+            $client = New-Object Tridion.ContentManager.CoreService.Client.CoreServiceClient $binding,$endpoint
         }
-	}
+    }
 
     Set-ClientCredentials($client)
 
@@ -190,7 +289,6 @@ function Get-CoreServiceClient {
 
     return $client;
 }
-
 
 $groups = $null 
 
@@ -248,6 +346,8 @@ function Set-AccessControlEntry($container, $trustee, $rights, $permissions)
 
 function Import-Security($securityFilePath, $coreServiceClient) 
 {
+    $securityFilePath = Add-CmVersion($securityFilePath)
+
     Write-Host "Importing security settings from file '$securityFilePath'..."
 
     [xml]$securityXml = Get-Content $securityFilePath
@@ -383,9 +483,30 @@ function Invoke-Upload($mapping, $packageFullPath, $tempFolder)
     Import-CmPackage $packageFullPath $tempFolder $mapping
 }
 
+function Is-Web8
+{
+    $cmsVersion = $coreServiceClient.GetApiVersion()
+    $majorVersion = $cmsVersion.Split(".")[0] -as [int];
+    if($majorVersion -lt 9)
+    {
+        return $true
+    }
+    return $false
+}
+
+function Add-CmVersion($packageFullPath)
+{
+    $cmsVersion = if(Is-Web8) {"web8"} else {"sites9"}  
+    $outputFilename = Split-Path $packageFullPath -leaf
+    $path = Join-Path -Path $packageFullPath.Replace($outputFilename, $cmsVersion) -ChildPath $outputFilename
+    return $path
+}
 
 function Import-CmPackage($packageFullPath, $tempFolder, $mappings = $null)
 {
+    # Adjust the package path to include cm version
+    $packageFullPath = Add-CmVersion($packageFullPath)
+
     Write-Host "Uploading package '$packageFullPath' ..."
     $filename = (Get-ChildItem $packageFullPath).BaseName
     $extension = (Get-ChildItem $packageFullPath).Extension
@@ -476,8 +597,7 @@ function Get-ImportMappings($masterPublication, $siteTypePublication, $contentPu
         )
 }
 
-
-function Add-ComponentPresentation($componentId, $templateId, $pageId, $insertIndex = -1) 
+function Add-ComponentPresentation-Web8($componentId, $templateId, $pageId, $insertIndex = -1) 
 {
     Write-Host "Adding Component Presentation ('$componentId', '$templateId') to Page '$pageId' ..."
 
@@ -517,6 +637,122 @@ function Add-ComponentPresentation($componentId, $templateId, $pageId, $insertIn
     $coreServiceClient.Update($page, $null)
 }
 
+function Add-ComponentPresentation($componentId, $templateId, $pageId, $insertIndex = -1, $regionName = "") 
+{
+	#This function does not support adding Component Presenation into a nested Region
+    Write-Host "Adding Component Presentation ('$componentId', '$templateId') to Page '$pageId' ..."
+
+    $page = $coreServiceClient.Read($pageId, $defaultReadOptions)
+    $component = $coreServiceClient.Read($componentId, $defaultReadOptions)
+    $template = $coreServiceClient.Read($templateId, $defaultReadOptions)
+
+    $regions = $page.Regions
+    $cps = $page.ComponentPresentations
+    $container = $page
+    $containerName = "Page"
+
+    if($regionName -ne "")
+    {
+        $region = $regions | Where { $_.RegionName -eq $regionName }
+
+        if(!$region)
+        {
+            $pageTitle = $page.Title
+            Write-Host "'$pageTitle' Page does not have a '$regionName' Region. Adding Component Presentation to the Page"
+        }
+		else
+		{
+			$cps = [Collections.Generic.List[object]]$region.ComponentPresentations
+			$container = $region
+			$containerName = "Region"
+		}
+    }
+
+    $cpList = new-object 'System.Collections.Generic.List[object]'
+    
+
+    foreach ($cp in $cps)
+    {
+        #CP already exists on page
+        if (($cp.ComponentTemplate.IdRef -eq $template.Id) -and ($cp.Component.IdRef -eq $component.Id))
+        {
+            Write-Host "$containerName already contains this Conponent Presentation"
+            return
+        }
+        $cpList.Add($cp)
+    }
+
+    $cp = New-Object Tridion.ContentManager.CoreService.Client.ComponentPresentationData
+    $cp.Component = New-Object Tridion.ContentManager.CoreService.Client.LinkToComponentData
+    $cp.Component.IdRef = $component.Id
+    $cp.ComponentTemplate = New-Object Tridion.ContentManager.CoreService.Client.LinkToComponentTemplateData
+    $cp.ComponentTemplate.IdRef = $template.Id
+
+    if($insertIndex -ge 0 -and $insertIndex -lt $cpList.Count)
+    {
+        $cpList.Insert($insertIndex, $cp)
+    }
+    else
+    {
+        $cpList.Add($cp)
+    }
+    
+    $container.ComponentPresentations = $cpList.ToArray()
+    $coreServiceClient.Update($page, $null)
+}
+
+function Remove-ComponentPresentation($componentId, $templateId, $pageId) 
+{
+    function GetListWithoutSpecifiedCP($container, $componentId, $templateId)
+    {
+        $cpList = @()
+		foreach($cp in $container)
+        {
+            if (($cp.ComponentTemplate.IdRef -eq $templateId) -and ($cp.Component.IdRef -eq $componentId))
+            {
+                $cpTitle = $cp.Component.Title
+				Write-Host "The Component Presentation '$cpTitle' is removed from the Page or Region."
+            }
+            else
+            {
+                $cpList += $cp
+            }
+        }
+        
+        #Comma is used here in order to prevent function to return 'null' if array is empty
+        return ,$cpList;
+    }
+
+    Write-Host "Removing Component Presentation ('$componentId', '$templateId') from Page '$pageId' ..."
+
+    $page = $coreServiceClient.Read($pageId, $defaultReadOptions)
+    $componentId = Get-TcmUri($componentId)
+    $templateId = Get-TcmUri($templateId)
+
+	[int]$removedCps = 0
+    $regions = $page.Regions
+    foreach($region in $regions)
+    {
+        $cps = GetListWithoutSpecifiedCP $region.ComponentPresentations $componentId $templateId
+        $removedCps += $region.ComponentPresentations.Count - $cps.Count
+        $region.ComponentPresentations = $cps
+    }
+
+    $cps = GetListWithoutSpecifiedCP $page.ComponentPresentations $componentId $templateId
+    $removedCps += $page.ComponentPresentations.Count - $cps.Count
+    $page.ComponentPresentations = $cps
+    
+    if ($removedCps -ne 0)
+    {
+        $coreServiceClient.Update($page, $null)
+        Write-Host "Removed $removedCps Component Presentations from Page '$pageId'"
+    }
+    else
+    {
+        Write-Warning "Page '$pageId' does not contain Component Presentation ('$componentId', '$templateId')"
+    }
+}
+
 function Add-TemplateToCompound($addedTbbId, $compoundTemplateId) 
 {
     Write-Host "Adding Template '$addedTbbId' to Compound Template '$compoundTemplateId' ..."
@@ -545,9 +781,41 @@ function Add-TemplateToCompound($addedTbbId, $compoundTemplateId)
     $coreServiceClient.Update($compoundTemplate, $null)
 }
 
+function Remove-TemplateFromCompound($tbbToRemoveId, $compoundTemplateId) 
+{
+    Write-Host "Removing TBB '$tbbToRemoveId' from Compound Template '$compoundTemplateId' ..."
+
+    $tbbToRemoveId = Get-TcmUri($tbbToRemoveId)
+
+    $compoundTemplate = $coreServiceClient.Read($compoundTemplateId, $defaultReadOptions)
+    $content = [xml] $compoundTemplate.Content
+
+    $ns = New-Object System.Xml.XmlNamespaceManager($content.NameTable)
+	$ns.AddNamespace("ns", $content.DocumentElement.NamespaceURI)
+	$ns.AddNamespace("xlink", "http://www.w3.org/1999/xlink")
+
+	$templateNodes = $content.SelectNodes("/ns:CompoundTemplate/ns:TemplateInvocation/ns:Template[@xlink:href='$tbbToRemoveId']", $ns)
+    if ($templateNodes.Count -gt 0)
+    {
+        foreach ($templateNode in $templateNodes)
+        {
+            $templateInvocation = $templateNode.ParentNode
+          	$templateInvocation.ParentNode.RemoveChild($templateInvocation)
+        }
+
+        $compoundTemplate.Content = $content.OuterXml
+        $coreServiceClient.Update($compoundTemplate, $null)
+        Write-Host "Removed $($templateNodes.Count) TBB invocations."
+    }
+    else
+    {
+        Write-Warning "Compound Template '$compoundTemplateId' does not contain TBB '$tbbToRemoveId'"
+    }
+}
+
 function Add-MetadataToItem($itemId, $schemaId, $metadata)
 {
-    Write-Host "Adding Metadata based on Schema '$schemaId' to Item '$itemId' ..."
+    Write-Host "Adding Metadata based on Schema '$schemaId' from Item '$itemId' ..."
 
     $schemaId = Get-TcmUri($schemaId)
 
@@ -562,4 +830,24 @@ function Add-MetadataToItem($itemId, $schemaId, $metadata)
     $item.MetadataSchema.IdRef = $schemaId
     $item.Metadata = $metadata
     $coreServiceClient.Update($item, $null)
+}
+
+function Remove-MetadataFromItem($itemId)
+{
+    Write-Host "Removing Metadata from Item '$itemId' ..."
+
+    $item = $coreServiceClient.Read($itemId, $defaultReadOptions)
+
+    if ($item.MetadataSchema -and $item.MetadataSchema.IdRef -ne "tcm:0-0-0")
+    {
+        $item.MetadataSchema = New-Object Tridion.ContentManager.CoreService.Client.LinkToSchemaData
+        $item.MetadataSchema.IdRef = "tcm:0-0-0"
+        $coreServiceClient.Update($item, $null)
+        Write-Host "Updated item '$($item.Id)'"
+    }
+    else
+    {
+        Write-Warning "Item '$itemId' does not have a Metadata Schema set."
+    }
+
 }
