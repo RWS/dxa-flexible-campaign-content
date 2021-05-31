@@ -1,10 +1,10 @@
 ﻿{
 	"manifestVersion": "1.0",
 	"id": "InstantCampaign",
-	"version": "1.3.0",
+	"version": "1.3.1",
 	"name": "Instant Campaign",
 	"description": "Instant Campaign - Extension that extract content & media from a campaign ZIP",
-	"author": "SDL Plc",
+	"author": "RWS",
 	"requireConfiguration": "No",
 	"extensions": [
 		{
