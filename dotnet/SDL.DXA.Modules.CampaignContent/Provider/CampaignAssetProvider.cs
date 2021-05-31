@@ -149,7 +149,7 @@ namespace SDL.DXA.Modules.CampaignContent.Provider
                         //
                         return null;
                     }
-                    if (!Directory.Exists(campaignBaseDir) || Directory.GetFiles(campaignBaseDir).Length == 0)
+                    if (!Directory.Exists(campaignBaseDir) || zipItem.ContentItem.LastModified > File.GetLastWriteTime(campaignBaseDir) || Directory.GetFiles(campaignBaseDir).Length == 0)
                     {
                         Log.Info("Extracting campaign " + campaignId + ", last modified = " + zipItem.ContentItem.LastModified);
                         if (!ExtractZip(zipItem.ContentItem, campaignBaseDir, zipItem.ContentItem.LastModified))
