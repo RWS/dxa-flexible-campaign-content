@@ -89,8 +89,8 @@ Follow the below steps to install this extension in SDL Tridion Sites CMS and DX
 SDL Tridion Sites CMS:
 
 1. Either compile the C# code in the 'cms/campaign-upload-extension' directory or download the precompiled Addon package/DLL here:
-    - DLL for SDL Tridion Sites 9.0: [campaign-upload-extension-v1.3.0.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.3.0.dll)
-    - Addon package for SDL Tridion Sites 9.1/9.5: [InstantCampaign-1.3.0.zip](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/InstantCampaign-1.3.0.zip)
+    - DLL for SDL Tridion Sites 9.0: [campaign-upload-extension-v1.3.1.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.3.1.dll)
+    - Addon package for SDL Tridion Sites 9.1/9.5: [InstantCampaign-1.3.1.zip](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/InstantCampaign-1.3.1.zip)
 
 
 2. If you compile the extension yourself for Sites 9.0 you need to merge the DLLs into one single DLL by using [ILMerge](https://www.microsoft.com/en-us/download/details.aspx?id=17630). Use the merge_dll.bat to generate a merged DLL. For Sites 9.1 and above an Addon package ZIP will automatically be generated when building.
@@ -285,7 +285,7 @@ We intend to follow Gitflow (http://nvie.com/posts/a-successful-git-branching-mo
 
 License
 ---------
-Copyright (c) 2020 SDL Group.
+Copyright (c) 2021 RWS Group.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
