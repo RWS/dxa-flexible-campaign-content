@@ -74,7 +74,10 @@ namespace SDL.Web.Extensions.CampaignUpload
                 using (ZipArchive archive = ZipFile.Open(zipFilename, ZipArchiveMode.Update))
                 {
                     ZipArchiveEntry entry = archive.GetEntry("index.html");
-                   
+                    if (entry == null)
+                    {
+                        throw new Exception("Missing index.html in the campaign ZIP!");
+                    }
                     using (StreamReader reader = new StreamReader(entry.Open()))
                     {
                         html = reader.ReadToEnd();
@@ -167,7 +170,7 @@ namespace SDL.Web.Extensions.CampaignUpload
                     }
                 }
 
-                //Logger.Write("Processing image tag...", "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Information);
+               // Logger.Write("Processing image tag...", "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Information);
               
                 var taggedImageName = node.Attributes["data-image-name"];
                 if (imageUrl != null && taggedImageName != null && !taggedImageNames.Contains(taggedImageName.Value) )
