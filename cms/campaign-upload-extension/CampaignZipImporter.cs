@@ -42,9 +42,8 @@ namespace SDL.Web.Extensions.CampaignUpload
         public static void OnComponentSave(Component component, SaveEventArgs args, EventPhases phase)
         {
             // TODO: Have a better way of detecting the campaign content zip
-            // TODO: Refactor into smaller methods
 
-            if ( component.ComponentType == ComponentType.Multimedia && component.MetadataSchema.Title.Equals("Campaign Content ZIP") )
+            if ( component.ComponentType == ComponentType.Multimedia && component.MetadataSchema.Title.Equals("Campaign Content ZIP") && !component.BinaryContent.Filename.Contains(".Processed") )
             {
                 ItemFields content = new ItemFields(component.Metadata, component.MetadataSchema);
                 EmbeddedSchemaField taggedContentList = (EmbeddedSchemaField)content["taggedContent"];
@@ -54,17 +53,19 @@ namespace SDL.Web.Extensions.CampaignUpload
 
                 var orgItem = component.OrganizationalItem;
 
+                /* TODO: Can we control this via a setting? We could upload an optional add-on configuration
                 if ( taggedContentList.Values.Count > 0 || taggedImageList.Values.Count > 0 )
                 {
                     // Just do the extraction of content fields from the HTML the first time
                     //
                     return;
                 }
-
+                */
+                
                 // Extract ZIP and find the index.html
                 //
                 var zipFilename = Path.GetTempPath() + "\\CampaignContent_" + component.Id.ItemId + "_" + DateTime.Now.ToFileTime() + ".zip";
-                Logger.Write("Extracting ZIP: " + zipFilename, "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Information);
+                Logger.Write("Extracting Campaign ZIP: " + zipFilename, "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Information);
                 using (FileStream fs = File.Create(zipFilename))
                 {
                     component.BinaryContent.WriteToStream(fs);
@@ -97,6 +98,21 @@ namespace SDL.Web.Extensions.CampaignUpload
                         ProcessLinks(htmlDoc, taggedLinkList);
 
                         component.Metadata = content.ToXml();
+
+                        // Mark the ZIP file processed. This avoid processing the ZIP file each time there is change in the content section.
+                        //
+                        var filename = component.BinaryContent.Filename;
+                        int dotIndex = filename.LastIndexOf(".");
+                        if (dotIndex == -1)
+                        {
+                            filename += ".Processed";
+                        }
+                        else
+                        {
+                            filename = filename.Insert(dotIndex, ".Processed");
+                        }
+                        component.BinaryContent.Filename = filename;
+
                         component.Save();
                     }
                 }
@@ -123,16 +139,22 @@ namespace SDL.Web.Extensions.CampaignUpload
                     element.SetAttributeValue("xmlns", "http://www.w3.org/1999/xhtml");
                 }
 
-                var taggedContentXml = new StringBuilder();
-                taggedContentXml.Append("<TaggedContent><name>");
-                taggedContentXml.Append(node.Attributes["data-content-name"].Value);
-                taggedContentXml.Append("</name><content>");
-                taggedContentXml.Append(node.InnerHtml);
-                taggedContentXml.Append("</content></TaggedContent>");
-                XmlDocument xmlDoc = new XmlDocument();
-                xmlDoc.LoadXml(taggedContentXml.ToString());
-                ItemFields taggedContent = new ItemFields(xmlDoc.DocumentElement, taggedContentSchema);
-                taggedContentList.Values.Add(taggedContent);
+                var contentName = node.Attributes["data-content-name"].Value;
+                if (!IsEntryAlreadyDefined(contentName, taggedContentList))
+                {
+                    //Logger.Write("Adding content with name: " + contentName, "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Information);
+                    var taggedContentXml = new StringBuilder();
+                    taggedContentXml.Append("<TaggedContent><name>");
+                    taggedContentXml.Append(contentName);
+                    taggedContentXml.Append("</name><content>");
+                    taggedContentXml.Append(node.InnerHtml);
+                    taggedContentXml.Append("</content></TaggedContent>");
+                    XmlDocument xmlDoc = new XmlDocument();
+                    xmlDoc.LoadXml(taggedContentXml.ToString());
+                    ItemFields taggedContent = new ItemFields(xmlDoc.DocumentElement, taggedContentSchema);
+                    taggedContentList.Values.Add(taggedContent);
+                }
+             
             }
 
         }
@@ -156,28 +178,42 @@ namespace SDL.Web.Extensions.CampaignUpload
 
             var taggedImageNames = new List<string>();
             var foundImages = new Dictionary<string, Component>();
+            var imageFolderWebDavUrl = parentFolder.WebDavUrl + "/" + componentTitle + " Images";
 
             foreach (var node in htmlDoc.DocumentNode.QuerySelectorAll("[data-image-name]"))
             {
                 var imageUrl = node.Attributes["src"];
-                if (imageUrl != null && !imageUrl.Value.StartsWith("http"))
-                {
-                    if (imageFolder == null)
-                    {
-                        imageFolder = new Folder(parentFolder.Session, parentFolder.Id);
-                        imageFolder.Title = componentTitle + " " + "Images";
-                        imageFolder.Save();
-                    }
-                }
 
-               // Logger.Write("Processing image tag...", "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Information);
+                //Logger.Write("Processing image tag...", "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Information);
               
                 var taggedImageName = node.Attributes["data-image-name"];
-                if (imageUrl != null && taggedImageName != null && !taggedImageNames.Contains(taggedImageName.Value) )
+                if (imageUrl != null && taggedImageName != null && !taggedImageNames.Contains(taggedImageName.Value) && !IsEntryAlreadyDefined(taggedImageName.Value, taggedImageList))
                 {
+                    //Logger.Write("Adding image with name: " + taggedImageName.Value, "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Information);
+
+                    if (imageUrl != null && !imageUrl.Value.StartsWith("http"))
+                    {
+                        if (imageFolder == null)
+                        {
+                            
+                            if (parentFolder.Session.IsExistingObject(imageFolderWebDavUrl))
+                            {
+                                imageFolder = (Folder) parentFolder.Session.GetObject(imageFolderWebDavUrl);
+                            }
+                            else
+                            {
+                                // Create folder
+                                //
+                                imageFolder = new Folder(parentFolder.Session, parentFolder.Id);
+                                imageFolder.Title = componentTitle + " Images";
+                                imageFolder.Save();
+                            }
+                        }
+                    }
+
                     // If an absolute image URL
                     //
-                    if (imageUrl.Value.StartsWith("http"))
+                    else if (imageUrl != null && imageUrl.Value.StartsWith("http"))
                     {
                         var url = imageUrl.Value;
                         string parameters = null;
@@ -214,33 +250,43 @@ namespace SDL.Web.Extensions.CampaignUpload
                         Component imageComponent;
                         if (foundImages.TryGetValue(imageUrl.Value, out imageComponent) == false)
                         {
-                            imageComponent = new Component(parentFolder.Session, imageFolder.Id);
                             var imageName = Path.GetFileName(imageUrl.Value);
-                            var metadataXml = new XmlDocument();
-                            metadataXml.LoadXml("<Metadata xmlns=\"" + imageSchema.NamespaceUri + "\"/>");
-                            imageComponent.Schema = imageSchema;
-                            imageComponent.Metadata = metadataXml.DocumentElement;
-                            imageComponent.Title = imageName;
-
-                            var extension = Path.GetExtension(imageUrl.Value).ToLower();
-                            bool foundMMType = false;
-                            foreach (var mmType in imageSchema.AllowedMultimediaTypes)
+                            var imageWebDavUri = imageFolderWebDavUrl + "/" + imageName;
+                            if (parentFolder.Session.IsExistingObject(imageWebDavUri))
                             {
-                                if (mmType.FileExtensions.Contains(extension))
+                                imageComponent = (Component) parentFolder.Session.GetObject(imageWebDavUri);
+                            }
+                            else
+                            {
+                                imageComponent = new Component(parentFolder.Session, imageFolder.Id);
+                                var metadataXml = new XmlDocument();
+                                metadataXml.LoadXml("<Metadata xmlns=\"" + imageSchema.NamespaceUri + "\"/>");
+                                imageComponent.Schema = imageSchema;
+                                imageComponent.Metadata = metadataXml.DocumentElement;
+
+                                var extension = Path.GetExtension(imageUrl.Value);
+                                imageComponent.Title = imageName.Replace(extension, ""); // Set title without extension
+                                extension = extension.ToLower().Replace(".", "");
+
+                                bool foundMMType = false;
+                                foreach (var mmType in imageSchema.AllowedMultimediaTypes)
                                 {
-                                    imageComponent.BinaryContent.MultimediaType = mmType;
-                                    foundMMType = true;
-                                    break;
+                                    if (mmType.FileExtensions.Contains(extension))
+                                    {
+                                        imageComponent.BinaryContent.MultimediaType = mmType;
+                                        foundMMType = true;
+                                        break;
+                                    }
                                 }
-                            }
-                            if (!foundMMType)
-                            {
-                                Logger.Write("Could not find multimedia type for image extension: " + extension, "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Error);
-                            }
+                                if (!foundMMType)
+                                {
+                                    Logger.Write("Could not find multimedia type for image extension: " + extension, "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Error);
+                                }
 
-                            imageComponent.BinaryContent.UploadFromStream = imageEntry.Open();
-                            imageComponent.BinaryContent.Filename = imageName;
-                            imageComponent.Save(true);
+                                imageComponent.BinaryContent.UploadFromStream = imageEntry.Open();
+                                imageComponent.BinaryContent.Filename = imageName;
+                                imageComponent.Save(true);
+                            }
                             foundImages.Add(imageUrl.Value, imageComponent);
                         }
                         var taggedImageXml = new StringBuilder();
@@ -285,34 +331,40 @@ namespace SDL.Web.Extensions.CampaignUpload
                         break;
                     }
                     var propertyName = node.Attributes["data-property-name" + indexSuffix];
-                    var propertyTarget = node.Attributes["data-property-target" + indexSuffix];
-                    if (propertyTarget == null)
+                    if (!IsEntryAlreadyDefined(propertyName.Value, taggedPropertyList))
                     {
-                        Logger.Write("Missing property target for property '" + propertyName.Value + "'. Skpping property...", "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Warning);
-                        continue;
-                    }
-                    var propertyValue = node.Attributes[propertyTarget.Value];
+                        var propertyTarget = node.Attributes["data-property-target" + indexSuffix];
+                        if (propertyTarget == null)
+                        {
+                            Logger.Write("Missing property target for property '" + propertyName.Value + "'. Skpping property...", "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Warning);
+                            continue;
+                        }
 
-                    var taggedPropertyXml = new StringBuilder();
-                    taggedPropertyXml.Append("<TaggedProperty xmlns:xlink=\"http://www.w3.org/1999/xlink\"><name>");
-                    taggedPropertyXml.Append(propertyName.Value);
-                    taggedPropertyXml.Append("</name><value>");
-                    taggedPropertyXml.Append(propertyValue.Value);
-                    taggedPropertyXml.Append("</value>");
-                    if (index > 1)
-                    {
-                        taggedPropertyXml.Append("<index>");
-                        taggedPropertyXml.Append(index);
-                        taggedPropertyXml.Append("</index>");
-                    }
-                    taggedPropertyXml.Append("<target>");
-                    taggedPropertyXml.Append(propertyTarget.Value);
-                    taggedPropertyXml.Append("</target></TaggedProperty>");
+                        //Logger.Write("Adding property with name: " + propertyName.Value, "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Information);
 
-                    XmlDocument xmlDoc = new XmlDocument();
-                    xmlDoc.LoadXml(taggedPropertyXml.ToString());
-                    ItemFields taggedProperty = new ItemFields(xmlDoc.DocumentElement, taggedPropertySchema);
-                    taggedPropertyList.Values.Add(taggedProperty);
+                        var propertyValue = node.Attributes[propertyTarget.Value];
+
+                        var taggedPropertyXml = new StringBuilder();
+                        taggedPropertyXml.Append("<TaggedProperty xmlns:xlink=\"http://www.w3.org/1999/xlink\"><name>");
+                        taggedPropertyXml.Append(propertyName.Value);
+                        taggedPropertyXml.Append("</name><value>");
+                        taggedPropertyXml.Append(propertyValue.Value);
+                        taggedPropertyXml.Append("</value>");
+                        if (index > 1)
+                        {
+                            taggedPropertyXml.Append("<index>");
+                            taggedPropertyXml.Append(index);
+                            taggedPropertyXml.Append("</index>");
+                        }
+                        taggedPropertyXml.Append("<target>");
+                        taggedPropertyXml.Append(propertyTarget.Value);
+                        taggedPropertyXml.Append("</target></TaggedProperty>");
+
+                        XmlDocument xmlDoc = new XmlDocument();
+                        xmlDoc.LoadXml(taggedPropertyXml.ToString());
+                        ItemFields taggedProperty = new ItemFields(xmlDoc.DocumentElement, taggedPropertySchema);
+                        taggedPropertyList.Values.Add(taggedProperty);
+                    }
 
                     index++;
                     indexSuffix = "-" + index;
@@ -331,23 +383,51 @@ namespace SDL.Web.Extensions.CampaignUpload
             Schema taggedLinkSchema = ((EmbeddedSchemaFieldDefinition)taggedLinkList.Definition).EmbeddedSchema;
             foreach (var node in htmlDoc.DocumentNode.QuerySelectorAll("[data-link-name]"))
             {
-                var taggedLinkXml = new StringBuilder();
-                taggedLinkXml.Append("<TaggedLink><name>");
-                taggedLinkXml.Append(node.Attributes["data-link-name"].Value);
-                taggedLinkXml.Append("</name>");
-                var linkValue = node.Attributes["href"];
-                if (linkValue != null)
+                var linkName = node.Attributes["data-link-name"].Value;
+                if (!IsEntryAlreadyDefined(linkName, taggedLinkList))
                 {
-                    taggedLinkXml.Append("<url>");
-                    taggedLinkXml.Append(linkValue.Value);
-                    taggedLinkXml.Append("</url>");
+                    //Logger.Write("Adding link with name: " + linkName, "CampaignZipImporter", LogCategory.Custom, System.Diagnostics.TraceEventType.Information);
+                    var taggedLinkXml = new StringBuilder();
+                    taggedLinkXml.Append("<TaggedLink><name>");
+                    taggedLinkXml.Append(linkName);
+                    taggedLinkXml.Append("</name>");
+                    var linkValue = node.Attributes["href"];
+                    if (linkValue != null)
+                    {
+                        taggedLinkXml.Append("<url>");
+                        taggedLinkXml.Append(linkValue.Value);
+                        taggedLinkXml.Append("</url>");
+                    }
+                    taggedLinkXml.Append("</TaggedLink>");
+                    XmlDocument xmlDoc = new XmlDocument();
+                    xmlDoc.LoadXml(taggedLinkXml.ToString());
+                    ItemFields taggedLinks = new ItemFields(xmlDoc.DocumentElement, taggedLinkSchema);
+                    taggedLinkList.Values.Add(taggedLinks);
                 }
-                taggedLinkXml.Append("</TaggedLink>");
-                XmlDocument xmlDoc = new XmlDocument();
-                xmlDoc.LoadXml(taggedLinkXml.ToString());
-                ItemFields taggedLinks = new ItemFields(xmlDoc.DocumentElement, taggedLinkSchema);
-                taggedLinkList.Values.Add(taggedLinks);
             }
+        }
+
+
+        /// <summary>
+        /// Is entry already defined
+        /// </summary>
+        /// <param name="entryName"></param>
+        /// <param name="esField"></param>
+        /// <returns></returns>
+        private static bool IsEntryAlreadyDefined(string entryName, EmbeddedSchemaField esField)
+        {
+            foreach (var value in esField.Values)
+            {
+                if (value.Contains("name"))
+                {
+                    var name = value["name"].ToString();
+                    if (name.Equals(entryName))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     }
     

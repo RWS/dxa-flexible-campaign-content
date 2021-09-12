@@ -92,12 +92,12 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>$(ProjectDir)..\tools\ILMerge.exe /internalize:$(ProjectDir)ilmerge_excludes.txt /out:"$(TargetDir)campaign-upload-extension-v1.3.1.dll" "$(TargetDir)campaign-upload-extension.dll" "$(TargetDir)HtmlAgilityPack.dll" "$(TargetDir)Fizzler.Systems.HtmlAgilityPack.dll" "$(TargetDir)Fizzler.dll" /v4
+    <PostBuildEvent>$(ProjectDir)..\tools\ILMerge.exe /internalize:$(ProjectDir)ilmerge_excludes.txt /out:"$(TargetDir)campaign-upload-extension-v1.3.2.dll" "$(TargetDir)campaign-upload-extension.dll" "$(TargetDir)HtmlAgilityPack.dll" "$(TargetDir)Fizzler.Systems.HtmlAgilityPack.dll" "$(TargetDir)Fizzler.dll" /v4
 if not exist  "$(ProjectDir)\AddonPackage" mkdir "$(ProjectDir)\AddonPackage"
-xcopy "$(TargetDir)campaign-upload-extension-v1.3.1.dll" "$(ProjectDir)AddonPackage\campaign-upload-extension.dll" /Y
+xcopy "$(TargetDir)campaign-upload-extension-v1.3.2.dll" "$(ProjectDir)AddonPackage\campaign-upload-extension.dll" /Y
 xcopy "$(ProjectDir)manifest.json"  "$(ProjectDir)AddonPackage" /Y
-if exist  "$(ProjectDir)\InstantCampaign-1.3.1.zip" del "$(ProjectDir)\InstantCampaign-1.3.1.zip"
-powershell.exe -nologo -noprofile -command "&amp; { Add-Type -A System.IO.Compression.FileSystem; [IO.Compression.ZipFile]::CreateFromDirectory('$(ProjectDir)\AddonPackage', '$(ProjectDir)\InstantCampaign-1.3.1.zip'); }"
+if exist  "$(ProjectDir)\InstantCampaign-1.3.2.zip" del "$(ProjectDir)\InstantCampaign-1.3.2.zip"
+powershell.exe -nologo -noprofile -command "&amp; { Add-Type -A System.IO.Compression.FileSystem; [IO.Compression.ZipFile]::CreateFromDirectory('$(ProjectDir)\AddonPackage', '$(ProjectDir)\InstantCampaign-1.3.2.zip'); }"
 </PostBuildEvent>
   </PropertyGroup>
 </Project>
