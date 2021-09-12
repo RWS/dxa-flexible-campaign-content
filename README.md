@@ -1,10 +1,10 @@
-SDL Tridion Sites Instant Campaign (aka DXA Flexible Campaign Content)
-======================================================================
+Tridion Sites Instant Campaign 
+=====================================
 
 Introduction
 --------------
 
-The SDL Tridion Sites Instant Campaign extension (also known as DXA Flexible Campaign Content) make it possible for digital agencies to create HTML based campaigns
+The Tridion Sites Instant Campaign extension (also known as DXA Flexible Campaign Content) make it possible for digital agencies to create HTML based campaigns
 in their own tool suites. When ready they can package all campaign assets (HTML, CSS,JS, images etc) into a ZIP and upload it into SDL Tridion Sites.
 The benefit of this extension is that digital agencies are given the freedom (within some defined boundaries of the brand guidelines, used CSS framework etc)
 to build campaign content with unique layout and interaction elements. And that without the need of creating specific templates in SDL Tridion Sites for the created campaign.
@@ -13,6 +13,9 @@ New functionality in v1.3:
 * Support for DXA 2.2 and SDL Tridion Sites 9.0/9.1/9.5
 * Performance improvements
 * Support for 9.1/9.5 Addon Service
+
+New functionality in v1.3.2:
+* Support for updating existing campaigns with new fields from the campaign
 
 A complete distribution is found on SDL AppStore:  https://appstore.sdl.com/web-content-management/app/instant-campaign/748/
 
@@ -86,11 +89,11 @@ Installation
 
 Follow the below steps to install this extension in SDL Tridion Sites CMS and DXA.
 
-SDL Tridion Sites CMS:
+Tridion Sites CMS:
 
 1. Either compile the C# code in the 'cms/campaign-upload-extension' directory or download the precompiled Addon package/DLL here:
-    - DLL for SDL Tridion Sites 9.0: [campaign-upload-extension-v1.3.1.dll](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.3.1.dll)
-    - Addon package for SDL Tridion Sites 9.1/9.5: [InstantCampaign-1.3.1.zip](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/InstantCampaign-1.3.1.zip)
+    - DLL for Tridion Sites 9.0: [campaign-upload-extension-v1.3.2.dll](https://github.com/rws/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/campaign-upload-extension-v1.3.2.dll)
+    - Addon package for Tridion Sites 9.1/9.5: [InstantCampaign-1.3.2.zip](https://github.com/rws/dxa-flexible-campaign-content/raw/master/cms/campaign-upload-extension/compiled/InstantCampaign-1.3.2.zip)
 
 
 2. If you compile the extension yourself for Sites 9.0 you need to merge the DLLs into one single DLL by using [ILMerge](https://www.microsoft.com/en-us/download/details.aspx?id=17630). Use the merge_dll.bat to generate a merged DLL. For Sites 9.1 and above an Addon package ZIP will automatically be generated when building.
@@ -100,7 +103,7 @@ SDL Tridion Sites CMS:
    Then add the following in your %SDLWEB_HOME%\config\Tridion.ContentManager.config in <extensions> tag:
 
    ```
-   <add assemblyFileName="[PATH TO DLL]\campaign-upload-extension-v1.3.0.dll"/>
+   <add assemblyFileName="[PATH TO DLL]\campaign-upload-extension-v1.3.2.dll"/>
    ```
 
 5. Sites 9.0: After that restart the services 'SDL Web Content Manager Service Host' and 'SDL Web Transport Distributor Service'
@@ -109,7 +112,7 @@ SDL Tridion Sites CMS:
 
 DXA.NET:
 
-1. If you do not have a DXA.NET setup (for SDL Tridion Sites 9.x) you can easily do this by following the instructions given here: [Installing the web application (.NET)](https://docs.sdl.com/784837/748556/sdl-digital-experience-accelerator-2-2/installing-the-------------dxa--net-web-application-for-------------tridion-sites)
+1. If you do not have a DXA.NET setup (for Tridion Sites 9.x) you can easily do this by following the instructions given here: [Installing the web application (.NET)](https://docs.sdl.com/784837/748556/sdl-digital-experience-accelerator-2-2/installing-the-------------dxa--net-web-application-for-------------tridion-sites)
 2. Either open up the solution 'dotnet/SDL.DXA.Modules.CampaignContent.sln' or add the VS project under the directory 'dotnet' to your Visual Studio solution
 4. Set the environment variable %DXA_SITE_DIR% to point to your DXA Site path (in visual studio or in your IIS instance)
 5. Restart Visual studio and rebuild the solution. Verify so the CampaignContent Area and DLLs are copied to your site folder
@@ -132,7 +135,7 @@ DXA.Java:
         <dependency>
             <groupId>com.sdl.dxa.modules.campaigncontent</groupId>
             <artifactId>campaigncontent-dxa-module</artifactId>
-            <version>1.3.0</version>
+            <version>1.3.2</version>
         </dependency>
 
     </dependencies>
@@ -150,7 +153,7 @@ To quickly getting started you can follow the steps below:
 
 1. Create a new page type using the new 'Campaign Page' page template
 2. Create a new multimedia component in your content structure (for example under Content/Campaigns) using the multimedia schema 'Campaign Content ZIP'
-3. Upload the [Example Campaign ZIP](https://github.com/sdl/dxa-flexible-campaign-content/raw/master/cms/example-campaign/ExampleCampaign.zip).
+3. Upload the [Example Campaign ZIP](https://github.com/rws/dxa-flexible-campaign-content/raw/master/cms/example-campaign/ExampleCampaign.zip).
 4. Save the multimedia component. All editable content is extracted from the campaign ZIP when saving it the first time.
 5. Go to your staging site and open Experience Manager. Create a new campaign page with the newly created page type.
 6. Select the uploaded campaign and drag & drop it on your page.
@@ -285,7 +288,7 @@ We intend to follow Gitflow (http://nvie.com/posts/a-successful-git-branching-mo
 
 License
 ---------
-Copyright (c) 2021 RWS Group.
+Copyright (c) 2015-2021 All Rights Reserved by the RWS Group for and on behalf of its affiliates and subsidiaries.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
