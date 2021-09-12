@@ -1,4 +1,4 @@
-Tridion Sites Instant Campaign 
+Instant Campaign 
 =====================================
 
 Introduction
